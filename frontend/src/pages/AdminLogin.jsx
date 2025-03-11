@@ -17,7 +17,7 @@ const AdminLogin = () => {
       const response = await axios.post('http://localhost:5555/admin/login', {
         username: username,
         password: password,
-        role: role // Include role in the login request
+        role: role
       });
 
       // Store jwt token values
