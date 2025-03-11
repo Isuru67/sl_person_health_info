@@ -3,19 +3,22 @@ import mongoose from "mongoose";
 const adminSchema = mongoose.Schema(
 
 {
-   role: {
-      type: String,
-      required: true
-   },
-  username: {
+  name: {
+     type: String,
+     required: true
+  },
+  uname: {
     type: String,
     required: true
  },
  password: {
     type: String,
     required: true
+ },
+ email: {
+    type: String,
+    required: true
  }
- 
 
 }
 
