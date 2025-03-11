@@ -49,9 +49,9 @@ router.post('/register', async (request, response) => {
         const { role, username, password } = request.body;
       
         try {
-          //const existingAdmin = await Admin.findOne({ username });
-          //if (existingAdmin) return response.status(400).json({ message: 'Username already exists' });
-          console.log('Received Data:', request.body);
+          const existingAdmin = await Admin.findOne({ username });
+          if (existingAdmin) return response.status(400).json({ message: 'Username already exists' });
+          
           const salt = await bcrypt.genSalt(10);
           const hashedPassword = await bcrypt.hash(password, salt);
 
