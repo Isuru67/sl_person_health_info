@@ -1,8 +1,9 @@
 import express, { request } from "express";
 import {PORT,mongoDBURL} from "./config.js";
 import mongoose from "mongoose";
-import { Admin } from "./models/adminModel.js";
+//import { Admin } from "./models/adminModel.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import hospitalRoutes from "./routes/hospitalRoutes.js"
 import cors from "cors";
 
 //defines an instance of the Express framework and assigns it to the variable
@@ -24,7 +25,7 @@ app.get('/',(request,response)=>{
 
 
 app.use('/admin', adminRoutes);
-
+app.use('/Hospital_Patient', hospitalRoutes);
 
 
 mongoose.connect(mongoDBURL)
