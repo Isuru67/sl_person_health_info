@@ -2,8 +2,7 @@ import express, { request, response } from "express";
 import {PORT,mongoDBURL} from "./config.js";
 import mongoose from "mongoose";
 import adminRoutes from "./routes/adminRoutes.js";
-import hospitalRoutes from "./routes/hospitalRoutes.js"
-import adminRoutes from "./routes/adminRoutes.js";
+import hospitalRoutes from "./routes/hospitalRoutes.js";
 import patientRoutes from './routes/patientRoutes.js';
 import cors from "cors";
 
