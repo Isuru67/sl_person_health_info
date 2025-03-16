@@ -28,8 +28,9 @@ const App = () => {
         <Route path='/Ho-admtission' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/medical-history' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
         <Route path='/treatment-plan' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-         <Route path='/Summ-Submission' element={<Summ_Submission formData={formData} />} />
+         <Route path='/summ-submission' element={<Summ_Submission formData={formData} />} />
         {/*
+        <Route path='' element={} />
         <Route path='' element={} />
         <Route path='' element={} />
         <Route path='' element={} />
