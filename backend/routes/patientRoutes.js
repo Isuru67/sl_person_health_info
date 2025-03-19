@@ -11,15 +11,17 @@ router.post('/create', async (request, response) => {
         if (
             !request.body.name ||
             !request.body.nic ||
+            !request.body.dob ||
             !request.body.blood ||
             !request.body.tele ||
             !request.body.email ||
             !request.body.username ||
-            !request.body.password
+            !request.body.password ||
+            !request.body.pic
         ) {
             console.log(" Missing Fields in Request");
             return response.status(400).send({
-                message: 'Send all required fields: name, nic, blood, tele, email, username, password',
+                message: 'Send all required fields: name, nic, dob, blood, tele, email, username, password, pic',
             });
         }
 
@@ -28,11 +30,13 @@ router.post('/create', async (request, response) => {
         const newPatient = {
             name: request.body.name,
             nic: request.body.nic,
+            dob: request.body.dob,
             blood: request.body.blood,
             tele: request.body.tele,
             email: request.body.email,
             username: request.body.username,
             password: request.body.password,
+            pic: request.body.pic,
         };
 
         console.log(" Creating New Patient:", newPatient);
@@ -98,10 +102,11 @@ router.put('/patient', async (request, response) => {
                 !request.body.tele ||
                 !request.body.email ||
                 !request.body.username ||
-                !request.body.password 
+                !request.body.password ||
+                !request.body.pic
             ) {
                 return response.status(400).send({
-                    message: 'Send all required fields: name, nic, dob, blood, tele, email, username, password',
+                    message: 'Send all required fields: name, nic, dob, blood, tele, email, username, password, pic',
                 });
             }
 
