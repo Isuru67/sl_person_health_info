@@ -1,9 +1,8 @@
 import express, { request, response } from "express";
 import {PORT,mongoDBURL} from "./config.js";
 import mongoose from "mongoose";
-import { Admin } from "./models/adminModel.js";
-import { Patient } from "./models/patientModel.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import hospitalRoutes from "./routes/hospitalRoutes.js";
 import patientRoutes from './routes/patientRoutes.js';
 import cors from "cors";
 
@@ -24,6 +23,7 @@ app.get('/',(request,response)=>{
     });
 
 app.use('/admin', adminRoutes);
+app.use('/Hospital_Patient', hospitalRoutes);
 app.use('/patient', patientRoutes);
 
 mongoose
