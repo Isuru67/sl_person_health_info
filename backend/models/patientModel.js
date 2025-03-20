@@ -10,10 +10,6 @@ const patientSchema = mongoose.Schema(
             type: Number,
             required: true,
         },
-        dob: {
-            type: Date,
-            require: true,
-        },
         blood: {
             type: String,
             required: true,
@@ -34,10 +30,6 @@ const patientSchema = mongoose.Schema(
             type: String,
             required: true,
         }, 
-        pic: {
-            type: Image,
-            required: true,
-        },
     },
     {
         timestamps: true,
