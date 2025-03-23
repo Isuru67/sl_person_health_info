@@ -3,6 +3,7 @@ import {Routes, Route} from 'react-router-dom'
 import AdminLogin from './pages/AdminLogin'
 import UserLogin from './pages/UserLogin'
 import Home from './pages/Home'
+import HospitalDashboard from './pages/HospitalDashboard'
 import PatientRegister from './pages/PatientRegister'
 import ViewPatientProfile from './pages/ViewPatientProfile'
 import EditPatientProfile from './pages/EditPatientProfile'
@@ -16,7 +17,7 @@ import Summ_Submission from './pages/Summ_Submission'
 
 const App = () => {
   const [formData, setFormData] = useState({
-    ho_patientInfo: {}, 
+    
     ho_admissionDetai: {}, 
     medicalHistory: {}, 
     treatmentPlan: {}
@@ -27,6 +28,7 @@ const App = () => {
         <Route path='/' element={<Home/>} />
         <Route path='/admin' element={<AdminLogin/>} />       
         <Route path='/user' element={<UserLogin/>} />
+        <Route path='/hospitaldashboard' element={<HospitalDashboard formData={formData} setFormData={setFormData} />} />
         <Route path='/patient/create' element={<PatientRegister/>}/>
         <Route path='/patient/view/:id' element={<ViewPatientProfile/>}/>
         <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
