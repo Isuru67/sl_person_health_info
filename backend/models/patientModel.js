@@ -35,7 +35,7 @@ const patientSchema = mongoose.Schema(
             required: true,
         }, 
         pic: {
-            type: Image,
+            type: String,
             required: true,
         },
     },
