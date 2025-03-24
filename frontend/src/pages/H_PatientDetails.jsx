@@ -1,65 +1,69 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import DualNavbar from "../components/layout";
 
-const H_PatientDetails = ({ hospital }) => {
-    const { id } = useParams();
-    const [patient, setPatient] = useState(null);
-    const [treatmentDetails, setTreatmentDetails] = useState({ treatment: "", report: "" });
+const H_PatientDetails = () => {
+    const [patients, setPatients] = useState([]);
+    const [searchNIC, setSearchNIC] = useState("");
+    const [selectedPatient, setSelectedPatient] = useState(null);
 
     useEffect(() => {
-        const fetchPatientDetails = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5000/hospital/patient/${id}`, {
-                    headers: { Authorization: `Bearer ${hospital.token}` }
-                });
-                setPatient(response.data);
-            } catch (error) {
-                console.error("Error fetching patient details:", error);
-            }
-        };
-        fetchPatientDetails();
-    }, [id, hospital.token]);
+        axios.get("http://localhost:5000/api/patients")
+            .then((res) => {
+                console.log("API Response:", res.data);
+                setPatients(res.data);
+            })
+            .catch((error) => console.error("Error fetching patients:", error));
+    }, []);
 
-    const handleChange = (e) => {
-        setTreatmentDetails({ ...treatmentDetails, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSearch = async () => {
         try {
-            await axios.post(`http://localhost:5000/hospital/patient/${id}/treatment`, treatmentDetails, {
-                headers: { Authorization: `Bearer ${hospital.token}` }
-            });
-            alert("Treatment details added successfully!");
+            const res = await axios.get(`http://localhost:5555/api/patients/${searchNIC}`);
+            setSelectedPatient(res.data);
         } catch (error) {
-            console.error("Error adding treatment details:", error);
-            alert("Error adding treatment details. Please try again.");
+            alert("Patient not found");
+            setSelectedPatient(null);
         }
     };
 
-    if (!patient) return <div>Loading...</div>;
-
     return (
-        <div className="container">
-            <h2>Patient Details</h2>
-            <p><strong>Name:</strong> {patient.fullName}</p>
-            <p><strong>NIC:</strong> {patient.nic}</p>
-            <p><strong>Address:</strong> {patient.address}</p>
-            {/* Add more patient details as needed */}
+        <div className="flex flex-col h-screen bg-gray-100">
+            {/* Top Navigation Bar */}
+            <DualNavbar />
+            <div className="container">
+                <h2>Hospital Patient Details</h2>
+                <input
+                    type="text"
+                    placeholder="Enter NIC to Search"
+                    value={searchNIC}
+                    onChange={(e) => setSearchNIC(e.target.value)}
+                />
+                <button onClick={handleSearch}>Search</button>
 
-            <h3>Add Treatment Details</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label htmlFor="treatment" className="form-label">Treatment</label>
-                    <input type="text" name="treatment" className="form-control" onChange={handleChange} required />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="report" className="form-label">Upload Report</label>
-                    <input type="file" name="report" className="form-control" onChange={handleChange} required />
-                </div>
-                <button type="submit" className="btn btn-primary">Submit Treatment</button>
-            </form>
+                {selectedPatient && (
+                    <div className="patient-card">
+                        <h3>{selectedPatient.name}</h3>
+                        <p>NIC: {selectedPatient.nic}</p>
+                        <p>Blood Group: {selectedPatient.blood}</p>
+                        <button onClick={() => alert("Treatment functionality here!")}>Treatment</button>
+                    </div>
+                )}
+
+                <h3>All Patients</h3>
+                {patients && patients.length > 0 ? (
+                    patients.map((p) => (
+                        <div key={p._id} className="patient-card">
+                            <h3>{p.name}</h3>
+                            <p>NIC: {p.nic}</p>
+                            <p>Blood Group: {p.blood}</p>
+                            <button onClick={() => setSelectedPatient(p)}>View</button>
+                        </div>
+                    ))
+                ) : (
+                    <p>No patients found.</p>
+                )}
+            </div>
         </div>
     );
 };
