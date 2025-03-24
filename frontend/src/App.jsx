@@ -30,7 +30,7 @@ const App = () => {
         <Route path='/admin' element={<AdminLogin/>} />       
         <Route path='/user' element={<UserLogin/>} />
         <Route path='/hospitaldashboard' element={<HospitalDashboard formData={formData} setFormData={setFormData} />} />
-        <Route path='/patient/create' element={<PatientRegister/>}/>
+        <Route path='/patient/register' element={<PatientRegister/>}/>
         <Route path='/patient/view/:id' element={<ViewPatientProfile/>}/>
         <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
         <Route path='/patient/Delete/:id' element={<DeletePatientProfile/>}/>
