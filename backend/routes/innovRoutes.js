@@ -34,8 +34,12 @@ router.post('/analyze', async (req, res) => {
             }
         );
 
-        console.log("DeepSeek API response:", response.data);
-        res.json(response.data);
+        console.log("Straico API response:", response.data);
+
+        // Extracting the actual answer from the response
+        const answer = response.data?.data?.completions?.["openai/gpt-3.5-turbo-0125"]?.completion?.choices?.[0]?.message?.content || "No answer found";
+
+        res.json({ answer });
     } catch (error) {
         console.error('Error analyzing health data:', error.response?.data || error.message);
         res.status(500).json({ error: 'Error processing data' });
