@@ -8,7 +8,7 @@ import PatientRegister from './pages/PatientRegister'
 import ViewPatientProfile from './pages/ViewPatientProfile'
 import EditPatientProfile from './pages/EditPatientProfile'
 import DeletePatientProfile from './pages/DeletePatientProfile'
-import Ho_Pa_Details from './pages/Ho_Pa_Details'
+import H_PatientDetails from './pages/H_PatientDetails'
 import Ho_AdmissionDetails from './pages/Ho_AdmissionDetails'
 import MedicalHistory from './pages/MedicalHistory'
 import TreatmentPlan from './pages/TreatmentPlan'
@@ -33,7 +33,7 @@ const App = () => {
         <Route path='/patient/view/:id' element={<ViewPatientProfile/>}/>
         <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
         <Route path='/patient/Delete/:id' element={<DeletePatientProfile/>}/>
-        <Route path='/hospital-patien' element={<Ho_Pa_Details formData={formData} setFormData={setFormData} />} />
+        <Route path='/H_PatientDetails' element={<H_PatientDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/Ho-admtission' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/medical-history' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
         <Route path='/treatment-plan' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
