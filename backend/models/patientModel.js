@@ -7,19 +7,19 @@ const patientSchema = mongoose.Schema(
             required: true,
         },
         nic: {
-            type: Number,
+            type: String,
             required: true,
         },
         dob: {
             type: Date,
-            require: true,
+            required: true,
         },
         blood: {
             type: String,
             required: true,
         },
         tele: {
-            type: Number,
+            type: String,
             required: true,
         },
         email: {
