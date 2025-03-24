@@ -42,7 +42,7 @@ const PatientRegister = () => {
     };
     setLoading(true);
     axios
-    .post('http://localhost:5555/patient/register', data)
+    .post('http://localhost:5555/patient', data)
     .then(() => {
       setLoading(false);
       navigate('/');
