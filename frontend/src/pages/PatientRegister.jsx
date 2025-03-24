@@ -125,7 +125,7 @@ const PatientRegister = () => {
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>Password</label>
           <input 
-           type='text'
+           type='password'
            value={password}
            onChange={(e) => setPassword(e.target.value)}
            className='border-2 border-gray-500 px-4 py-2 w-full'
