@@ -102,7 +102,7 @@ const EditPatientProfile = () => {
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>DOB</label>
           <input
-            type='date'
+            type='text'
             value={dob}
             onChange={(e) => setDOB(e.target.value)}
             className='border-2 border-gray-500 px-4 py-2 w-full'
@@ -120,7 +120,7 @@ const EditPatientProfile = () => {
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>Telephone</label>
           <input
-            type='number'
+            type='text'
             value={tele}
             onChange={(e) => setTelephone(e.target.value)}
             className='border-2 border-gray-500 px-4 py-2 w-full'
