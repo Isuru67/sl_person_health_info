@@ -42,7 +42,7 @@ const PatientRegister = () => {
     };
     setLoading(true);
     axios
-    .post('http://localhost:5555/patient/create', data)
+    .post('http://localhost:5555/patient/register', data)
     .then(() => {
       setLoading(false);
       navigate('/');
@@ -98,7 +98,7 @@ const PatientRegister = () => {
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>Telephone</label>
           <input 
-           type='Number'
+           type='text'
            value={tele}
            onChange={(e) => setTelephone(e.target.value)}
            className='border-2 border-gray-500 px-4 py-2 w-full'

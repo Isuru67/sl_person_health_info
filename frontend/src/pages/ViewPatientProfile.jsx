@@ -12,7 +12,7 @@ const ViewPatientProfile = () => {
   useEffect(() => {
     setLoading(true);
     axios
-    .get('http://localhost:5555/patient/${id}')
+    .get(`http://localhost:5555/patient/${id}`)
     .then((response) => {
         setPatient(response.data);
         setLoading(false)
@@ -33,32 +33,32 @@ const ViewPatientProfile = () => {
            <div className='flex flex-col border-2 border-sky-400 rounded-xl w-fit p-4'>
             <div className='my-4'>
                 <span className='text-xl mr-4 text-gray-500'>Name</span>
-                <span>{patient._name}</span>
+                <span>{patient.name}</span>
             </div>
             <div className='my-4'>
                 <span className='text-xl mr-4 text-gray-500'>NIC</span>
-                <span>{patient._nic}</span>
+                <span>{patient.nic}</span>
             </div>
             <div className='my-4'>
                 <span className='text-xl mr-4 text-gray-500'>DOB</span>
-                <span>{patient._dob}</span>
-                <span>{new Date(patient.birthdayAt).toString()}</span>
+                <span>{patient.dob}</span>
+                <span>{new Date(patient.dob).toString()}</span>
             </div>
             <div className='my-4'>
                 <span className='text-xl mr-4 text-gray-500'>Blood Group</span>
-                <span>{patient._blood}</span>
+                <span>{patient.blood}</span>
             </div>
             <div className='my-4'>
                 <span className='text-xl mr-4 text-gray-500'>Telephone</span>
-                <span>{patient._tele}</span>
+                <span>{patient.tele}</span>
             </div>
             <div className='my-4'>
                 <span className='text-xl mr-4 text-gray-500'>Email</span>
-                <span>{patient._email}</span>
+                <span>{patient.email}</span>
             </div>
             <div className='my-4'>
                 <span className='text-xl mr-4 text-gray-500'>Profile Picture</span>
-                <span>{patient._pic}</span>
+                <span>{patient.pic}</span>
             </div>
            </div> 
         )}
