@@ -34,6 +34,7 @@ const App = () => {
         <Route path='/patient/view/:id' element={<ViewPatientProfile/>}/>
         <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
         <Route path='/patient/Delete/:id' element={<DeletePatientProfile/>}/>
+        <Route path='/H_PatientDetails' element={<H_PatientDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/hospital-patien' element={<H_PatientDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/Ho-admtission' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/medical-history' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />

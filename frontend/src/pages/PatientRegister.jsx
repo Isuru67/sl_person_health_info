@@ -5,6 +5,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const PatientRegister = () => {
+
+  const navigate = useNavigate();
+  
   const [name, setName] = useState('');
   const [nic, setNIC] = useState('');
   const [dob , setDOB] = useState('');
@@ -13,8 +16,18 @@ const PatientRegister = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [pic, SetProfilePicture] = useState('');
+  const [pic, setProfilePicture] = useState('');
   const [loading, setLoading] = useState(false);
+
+       // Handle file selection and extract only the filename
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      // Get just the filename from the full path
+      const fileName = e.target.files[0].name;
+      setProfilePicture(fileName);
+    }
+  };
+
   const handleSavePatient = () => {
     const data = {
       name,
@@ -29,10 +42,10 @@ const PatientRegister = () => {
     };
     setLoading(true);
     axios
-    .post('http://localhost:5555/patient', data)
+    .post('http://localhost:5555/patient/create', data)
     .then(() => {
       setLoading(false);
-      Navigate('/');
+      navigate('/');
     })
     .catch((error) => {
       setLoading(false);
@@ -112,7 +125,7 @@ const PatientRegister = () => {
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>Password</label>
           <input 
-           type='text'
+           type='password'
            value={password}
            onChange={(e) => setPassword(e.target.value)}
            className='border-2 border-gray-500 px-4 py-2 w-full'
@@ -121,11 +134,12 @@ const PatientRegister = () => {
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>Profile Picture</label>
           <input 
-           type='image'
-           value={pic}
-           onChange={(e) => SetProfilePicture(e.target.value)}
+           type='file'
+           accept='image/*'
+           onChange={handleFileChange}
            className='border-2 border-gray-500 px-4 py-2 w-full'
           />
+          {pic && <p className="mt-2 text-sm text-gray-500">Selected file: {pic}</p>}
         </div>
         <button className='p-2 bg-sky-300 m-8' onClick={handleSavePatient}>
           Create Acount
