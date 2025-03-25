@@ -2,6 +2,7 @@ import express from "express";
 import { Patient } from '../models/patientModel.js';
 import dotenv from "dotenv";
 import jwt from 'jsonwebtoken';
+import { getPatientByNIC } from "../controllers/patientController.js";
 
 dotenv.config();
 
@@ -192,5 +193,23 @@ router.delete('/:id', async (request, response) => {
     }
 });
 
-export default router;
+router.get('/search/:nic', async (request,response)=>{
+    
+    try{
+    
+        const nic = request.params.nic;
+    
+     const patient = await Patient.findOne({ nic });
+    
+     return response.status(200).json(patient);
+    
+    }catch(error){
+    
+        console.log(error.message);
+        response.status(500).send( {message: error.message});
+    
+    }
+    
+});
 
+export default router;

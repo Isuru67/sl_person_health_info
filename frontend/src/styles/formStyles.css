@@ -3,7 +3,7 @@ body {
     font-family: 'Arial', sans-serif;
     background-color: #f4f7fc;
     margin: 0;
-    padding: 0;
+    padding: 10;
 }
 
 /* Container for the form */
@@ -52,13 +52,11 @@ body {
     margin-bottom: 5px;
     color: #555;
 }
-
-/* Button Styling */
 button {
-    width: 100%;
+    width: 50%;
     padding: 12px;
     margin-top: 10px;
-    background: #007bff;
+    background: #364757;
     color: white;
     border: none;
     border-radius: 5px;
@@ -68,7 +66,25 @@ button {
 }
 
 button:hover {
-    background: #0056b3;
+    background: #3e4858;
+}
+
+/* Button Styling */
+.form-button {
+    width: 70%;
+    padding: 12px;
+    margin-top: 10px;
+    background: #376390;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.form.button:hover {
+    background: #1b4789;
 }
 
 /* Next & Previous Buttons */
@@ -79,7 +95,7 @@ button:hover {
 }
 
 .button-group button {
-    width: 48%;
+    width: 78%;
 }
 
 /* Review and Submit Section */
