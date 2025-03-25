@@ -1,6 +1,5 @@
-import express, { request, response } from "express";
+import express from "express";
 import { Patient } from '../models/patientModel.js';
-import bcrypt from 'bcryptjs';
 import dotenv from "dotenv";
 import jwt from 'jsonwebtoken';
 import { getPatientByNIC } from "../controllers/patientController.js";
@@ -9,172 +8,189 @@ dotenv.config();
 
 const router = express.Router();
 
+// Validation functions with specific error messages
+const validateName = (name) => {
+    if (!name) return "Name is required";
+    if (!/^[A-Za-z\s]+$/.test(name)) return "Name must contain only letters and spaces";
+    return null;
+};
+
+const validateNIC = (nic) => {
+    if (!nic) return "NIC is required";
+    if (!/^\d+$/.test(nic)) return "NIC must contain only numbers";
+    return null;
+};
+
+const validateTelephone = (tele) => {
+    if (!tele) return "Telephone is required";
+    if (!/^\d{10}$/.test(tele)) return "Telephone must be exactly 10 digits";
+    return null;
+};
+
+const validateEmail = (email) => {
+    if (!email) return "Email is required";
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) return "Email must be a valid Gmail address (e.g., user@gmail.com)";
+    return null;
+};
+
+const validatePassword = (password) => {
+    if (!password) return "Password is required";
+    if (!/^[a-zA-Z0-9]{8,10}$/.test(password)) return "Password must be 8-10 alphanumeric characters";
+    return null;
+};
+
+// Patient Registration Route
 router.post('/register', async (request, response) => {
-        const { name, nic, dob,blood, tele,email, username, password, pic } = request.body;
-      
-        try {
-          const existingPatient = await Patient.findOne({ nic });
-          if (existingPatient) return response.status(400).json({ message: 'User already exists' });
-          
-          const salt = await bcrypt.genSalt(10);
-          const hashedName = await bcrypt.hash(name, salt);
-          const hashedBloodGroup = await bcrypt.hash(blood, salt);
-          const hashedTelephone = await bcrypt.hash(tele, salt);
-          const hashedEmail = await bcrypt.hash(email, salt);
-          const hashedUsername = await bcrypt.hash(username, salt);
-          const hashedPassword = await bcrypt.hash(password, salt);
+    const { name, nic, dob, blood, tele, email, username, password, pic } = request.body;
 
-          
-          const newPatient = new Patient({ name: hashedName, nic, dob: hashedDob, blood: hashedBloodGroup, tele: hashedTelephone,email: hashedEmail, username: hashedUsername, password: hashedPassword, pic});
-          await newPatient.save();
-        
-          const token = jwt.sign({ id: newPatient._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-          response.status(201).json({ token });
-        } catch (error) {
-            response.status(500).json({ error: 'Server error' });
+    try {
+        // Check if patient already exists by NIC
+        const existingPatient = await Patient.findOne({ nic });
+        if (existingPatient) return response.status(400).json({ error: 'User already exists with this NIC' });
+
+        // Collect validation errors
+        const errors = [
+            validateName(name),
+            validateNIC(nic),
+            validateTelephone(tele),
+            validateEmail(email),
+            validatePassword(password)
+        ].filter(Boolean); // Filters out null values
+
+        // If errors exist, return all error messages
+        if (errors.length > 0) {
+            return response.status(400).json({ errors });
         }
-      });
 
-//Route for save a new patient
+        // Create and save the new patient
+        const newPatient = new Patient({
+            name, nic, dob, blood, tele, email, username, password, pic
+        });
+
+        await newPatient.save();
+
+        // Generate JWT token
+        const token = jwt.sign({ id: newPatient._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        return response.status(201).json({ message: 'Patient registered successfully', token });
+    } catch (error) {
+        console.error('Error during patient registration:', error);
+        return response.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Create Patient Route
 router.post('/create', async (request, response) => {
     try {
-        console.log("Incoming Request Body:", request.body);
+        const { name, nic, dob, blood, tele, email, username, password, pic } = request.body;
 
-        if (
-            !request.body.name ||
-            !request.body.nic ||
-            !request.body.dob ||
-            !request.body.blood ||
-            !request.body.tele ||
-            !request.body.email ||
-            !request.body.username ||
-            !request.body.password ||
-            !request.body.pic
-        ) {
-            console.log(" Missing Fields in Request");
-            return response.status(400).send({
-                message: 'Send all required fields: name, nic, dob, blood, tele, email, username, password, pic',
-            });
+        // Collect validation errors
+        const errors = [
+            validateName(name),
+            validateNIC(nic),
+            validateTelephone(tele),
+            validateEmail(email),
+            validatePassword(password)
+        ].filter(Boolean);
+
+        // Check for missing required fields
+        const requiredFields = { name, nic, dob, blood, tele, email, username, password, pic };
+        Object.entries(requiredFields).forEach(([key, value]) => {
+            if (!value) errors.push(`${key} is required`);
+        });
+
+        // If errors exist, return all error messages
+        if (errors.length > 0) {
+            return response.status(400).json({ errors });
         }
 
-        console.log(" All Required Fields Present");
-
-        const newPatient = {
-            name: request.body.name,
-            nic: request.body.nic,
-            dob: request.body.dob,
-            blood: request.body.blood,
-            tele: request.body.tele,
-            email: request.body.email,
-            username: request.body.username,
-            password: request.body.password,
-            pic: request.body.pic,
-        };
-
-        console.log(" Creating New Patient:", newPatient);
-
-        const patient = await Patient.create(newPatient);
-
-        console.log(" Patient Created Successfully:", patient);
-
-        return response.status(201).send(patient);
-
+        const newPatient = await Patient.create(request.body);
+        return response.status(201).json({ message: 'Patient created successfully', patient: newPatient });
     } catch (error) {
-        console.log(error.message);
-        response.status(500).send({ message: error.message });
+        console.error('Error while creating patient:', error);
+        return response.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-//Route for get all patient with database
-router.get('/', async (request,response) => {
-
-    try{
-        const patient = await Patient.find({});
-        return response.status(200).json({
-            count: patient.length,
-            data: patient
-    });
-
-    }catch (error) {
-
-        console.log(error.message);
-        response.status(500).send( {message: error.message});
+// Get All Patients Route
+router.get('/', async (request, response) => {
+    try {
+        const patients = await Patient.find({});
+        return response.status(200).json({ count: patients.length, data: patients });
+    } catch (error) {
+        console.error('Error while fetching patients:', error);
+        return response.status(500).json({ error: 'Internal Server Error' });
     }
-
 });
 
-//Route for get one patient by id with database
-router.get('/:id', async (request,response)=>{
-    
-    try{
-    
-        const {id} = request.params;
-    
-     const patient = await Patient.findById(id);
-    
-     return response.status(200).json(patient);
-    
-    }catch(error){
-    
-        console.log(error.message);
-        response.status(500).send( {message: error.message});
-    
-    }
-    
-});
+// Get Patient by ID Route
+router.get('/:id', async (request, response) => {
+    try {
+        const { id } = request.params;
+        const patient = await Patient.findById(id);
 
-//Route for update a patient
-router.put('/patient', async (request, response) => {
-        try {
-            if (
-                !request.body.name ||
-                !request.body.nic ||
-                !request.body.dob ||
-                !request.body.blood ||
-                !request.body.tele ||
-                !request.body.email ||
-                !request.body.username ||
-                !request.body.password ||
-                !request.body.pic
-            ) {
-                return response.status(400).send({
-                    message: 'Send all required fields: name, nic, dob, blood, tele, email, username, password, pic',
-                });
-            }
-
-            const { id } = request.params;
-
-            const result = await Patient.findByIdAndUpdate(id, request.body);
-
-            if (!result) {
-                return response.status(404).json({ message: 'Patient not found' });
-            }
-    
-        return response.status(200).send({ message: 'Patient updated successfully '});
-
-        }catch (error) {
-            console.log(error.message);
-            response.status(500).send({message: error.message});
+        if (!patient) {
+            return response.status(404).json({ error: 'Patient not found' });
         }
+
+        return response.status(200).json(patient);
+    } catch (error) {
+        console.error('Error while fetching patient by ID:', error);
+        return response.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
-//Route for delete a patient
-router.delete('/patient/:id', async (request, response) => {
-        try {
-            const { id } = request.params;
+// Update Patient Route
+router.put('/:id', async (request, response) => {
+    try {
+        const { id } = request.params;
 
-            const result = await Patient.findByIdAndDelete(id);
-
-            if (!result) {
-                return response.status(404).json({ message: 'Patient not found' });
-            }
-    
-        return response.status(200).send({ message: 'Patient deleted successfully '});
-
-        }catch (error) {
-            console.log(error.message);
-            response.status(500).send({message: error.message});
+        // Check if patient exists
+        const patient = await Patient.findById(id);
+        if (!patient) {
+            return response.status(404).json({ error: 'Patient not found' });
         }
+
+        // Validate updated data
+        const { name, nic, tele, email, password } = request.body;
+        const errors = [
+            name && validateName(name),
+            nic && validateNIC(nic),
+            tele && validateTelephone(tele),
+            email && validateEmail(email),
+            password && validatePassword(password)
+        ].filter(Boolean);
+
+        if (errors.length > 0) {
+            return response.status(400).json({ errors });
+        }
+
+        const updatedPatient = await Patient.findByIdAndUpdate(id, request.body, { new: true });
+
+        return response.status(200).json({ message: 'Patient updated successfully', patient: updatedPatient });
+    } catch (error) {
+        console.error('Error while updating patient:', error);
+        return response.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Delete Patient Route
+router.delete('/:id', async (request, response) => {
+    try {
+        const { id } = request.params;
+
+        // Check if patient exists
+        const patient = await Patient.findById(id);
+        if (!patient) {
+            return response.status(404).json({ error: 'Patient not found' });
+        }
+
+        await Patient.findByIdAndDelete(id);
+        return response.status(200).json({ message: 'Patient deleted successfully' });
+    } catch (error) {
+        console.error('Error while deleting patient:', error);
+        return response.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 router.get('/search/:nic', async (request,response)=>{
