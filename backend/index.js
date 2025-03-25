@@ -5,6 +5,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import hospitalRoutes from "./routes/hospitalRoutes.js";
 import patientRoutes from './routes/patientRoutes.js';
 import cors from "cors";
+import innovRoutes from './routes/innovRoutes.js';
 
 //defines an instance of the Express framework and assigns it to the variable
 const app = express();
@@ -25,6 +26,7 @@ app.get('/',(request,response)=>{
 app.use('/admin', adminRoutes);
 app.use('/hospitaldashboard', hospitalRoutes);
 app.use('/patient', patientRoutes);
+app.use('/ino', innovRoutes);
 
 mongoose
 .connect(mongoDBURL)
