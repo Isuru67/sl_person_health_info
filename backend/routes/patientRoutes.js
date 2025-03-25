@@ -1,7 +1,38 @@
 import express, { request, response } from "express";
 import { Patient } from '../models/patientModel.js';
+import bcrypt from 'bcryptjs';
+import dotenv from "dotenv";
+import jwt from 'jsonwebtoken';
+
+dotenv.config();
 
 const router = express.Router();
+
+router.post('/register', async (request, response) => {
+        const { name, nic, dob,blood, tele,email, username, password, pic } = request.body;
+      
+        try {
+          const existingPatient = await Patient.findOne({ nic });
+          if (existingPatient) return response.status(400).json({ message: 'User already exists' });
+          
+          const salt = await bcrypt.genSalt(10);
+          const hashedName = await bcrypt.hash(name, salt);
+          const hashedBloodGroup = await bcrypt.hash(blood, salt);
+          const hashedTelephone = await bcrypt.hash(tele, salt);
+          const hashedEmail = await bcrypt.hash(email, salt);
+          const hashedUsername = await bcrypt.hash(username, salt);
+          const hashedPassword = await bcrypt.hash(password, salt);
+
+          
+          const newPatient = new Patient({ name: hashedName, nic, dob: hashedDob, blood: hashedBloodGroup, tele: hashedTelephone,email: hashedEmail, username: hashedUsername, password: hashedPassword, pic});
+          await newPatient.save();
+        
+          const token = jwt.sign({ id: newPatient._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+          response.status(201).json({ token });
+        } catch (error) {
+            response.status(500).json({ error: 'Server error' });
+        }
+      });
 
 //Route for save a new patient
 router.post('/create', async (request, response) => {
