@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/menushamalith/Desktop/cricksl/sl_person_health_info/frontend/src/components/homevideo",
+      "program": "/Users/menushamalith/Desktop/cricksl/sl_person_health_info/frontend/src/components/homevideo/build/Debug/outDebug"
+    }
+  ]
+}
