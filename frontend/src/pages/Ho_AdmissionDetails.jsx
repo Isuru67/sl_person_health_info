@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
+import "../styles/formStyles.css";
+
 function sendData(e) {
     e.preventDefault();
 }
@@ -27,7 +29,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                     {/* Top Navigation Bar */}
              <DualNavbar />
         <div className="container" style={{ backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "75vh" ,minWidth:"230vh"}}>
-        <form onSubmit={sendData} style={{ width: "30%", minHeight: "40vh",border: "2px solid blue", padding: "20px", borderRadius: "8px", backgroundColor: "rgba(80, 80, 83, 0.34)" }}>
+        <form onSubmit={sendData} style={{ width: "30%", minHeight: "40vh",border: "2px solid blue", padding: "20px", borderRadius: "8px" }}>
             <h1 className="text-center"><b>Admission Details</b></h1>
             <form onSubmit={handleNext}>
                 <div className="mb-3">
