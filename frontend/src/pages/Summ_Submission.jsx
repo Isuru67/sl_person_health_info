@@ -1,6 +1,7 @@
 import React from "react";
 import axios from "axios";
 import DualNavbar from "../components/layout";
+import "../styles/formStyles.css";
 
 const Summ_Submission = ({ formData }) => {
     const handleSubmit = () => {

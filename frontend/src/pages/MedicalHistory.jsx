@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
+import "../styles/formStyles.css";
+
 
 function sendData(e) {
     e.preventDefault();
