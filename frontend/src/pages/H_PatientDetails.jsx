@@ -12,23 +12,26 @@ const H_PatientDetails = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get("http://localhost:5555/api/patients")
+        axios.get("http://localhost:5555/patient/")
             .then((res) => {
-                console.log("API Response:", res.data);
-                setPatients(res.data);
+                console.log("API Response:", res.data); 
+                setPatients(res.data.data);  // ✅ Extract the array correctly
             })
             .catch((error) => console.error("Error fetching patients:", error));
     }, []);
+    
 
     const handleSearch = async () => {
         try {
-            const res = await axios.get(`http://localhost:5555/api/patients/${searchNIC}`);
+            const res = await axios.get(`http://localhost:5555/patient/${searchNIC}`);
             setSelectedPatient(res.data);
         } catch (error) {
             alert("Patient not found");
             setSelectedPatient(null);
         }
     };
+    console.log("Patients State:", patients);
+
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
@@ -49,7 +52,7 @@ const H_PatientDetails = () => {
                         <h3>{selectedPatient.name}</h3>
                         <p>NIC: {selectedPatient.nic}</p>
                         <p>Blood Group: {selectedPatient.blood}</p>
-                        <button  onClick={() => navigate("/ho-admtission")}>Treatment</button>
+                        <button  onClick={() => navigate("/h-patientdetails/ho-admtission")}>Treatment</button>
                     </div>
                     
                 )}
@@ -58,18 +61,18 @@ const H_PatientDetails = () => {
                 </div>
 
                 <h3>All Patients</h3>
-                {patients && patients.length > 0 ? (
-                    patients.map((p) => (
-                        <div key={p._id} className="patient-card">
-                            <h3>{p.name}</h3>
-                            <p>NIC: {p.nic}</p>
-                            <p>Blood Group: {p.blood}</p>
-                            <button onClick={() => setSelectedPatient(p)}>View</button>
-                        </div>
-                    ))
-                ) : (
-                    <p>No patients found.</p>
-                )}
+                {Array.isArray(patients) && patients.length > 0 ? (
+                     patients.map((p) => (
+                     <div key={p._id} className="patient-card">
+                      <h3>{p.name}</h3>
+                    <p>NIC: {p.nic}</p>
+                      <p>Blood Group: {p.blood}</p>
+                     <button onClick={() => setSelectedPatient(p)}>View</button>
+        </div>
+    ))
+) : (
+    <p>No patients found.</p>
+)}
             </div>
         </div>
     );
