@@ -1,11 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
-import "../styles/formStyles.css";
 
-function sendData(e) {
-    e.preventDefault();
-}
 const Ho_AdmissionDetails = ({ formData, setFormData }) => {
     const navigate = useNavigate();
 
@@ -20,43 +16,72 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
     };
 
     const handleNext = (e) => {
-        e.preventDefault(); // Prevent default form submission
-        navigate("/medical-history");
+        e.preventDefault(); 
+        navigate("/h-patientdetails/medical-history");
     };
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
-                    {/* Top Navigation Bar */}
-             <DualNavbar />
-        <div className="container" style={{ backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "75vh" ,minWidth:"230vh"}}>
-        <form onSubmit={sendData} style={{ width: "30%", minHeight: "40vh",border: "2px solid blue", padding: "20px", borderRadius: "8px" }}>
-            <h1 className="text-center"><b>Admission Details</b></h1>
-            <form onSubmit={handleNext}>
-                <div className="mb-3">
-                    <label htmlFor="admissionDate" className="form-label"><b><h4>Patient Admission Date</h4></b></label>
-                    <input type="date" name="admissionDate" className="form-control" onChange={handleChange} required />
-                </div>
+            {/* Top Navigation Bar */}
+            <DualNavbar />
 
-                <div className="mb-3">
-                    <label htmlFor="admittingPhysician" className="form-label"><h4>Admitting Physician</h4></label>
-                    <input type="text" name="admittingPhysician" className="form-control" placeholder="Admitting Physician" onChange={handleChange} required />
-                </div>
+            <div className="flex justify-center items-center min-h-screen bg-white p-6">
+                <form onSubmit={handleNext} className="w-full max-w-lg bg-gray-50 p-6 rounded-lg shadow-md">
+                    <h1 className="text-center text-2xl font-semibold mb-4">Admission Details</h1>
 
-                <div className="mb-3">
-                    <label htmlFor="primaryDiagnosis" className="form-label"><h4>Patient Primary Diagnosis</h4></label>
-                    <input type="text" name="primaryDiagnosis" className="form-control" placeholder="Primary Diagnosis" onChange={handleChange} required />
-                </div>
+                    <div className="mb-4">
+                        <label className="block font-semibold">Patient Admission Date</label>
+                        <input 
+                            type="date" 
+                            name="admissionDate" 
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            onChange={handleChange} 
+                            required 
+                        />
+                    </div>
 
-                <div className="text-center">
-                    <button  onClick={() => navigate("/h-patientdetails/medical-history")}>Next</button>
-                </div>
-                <div className="text-center">
-                    <button  onClick={() => navigate("/h-patientdetails")}>Back</button>
-                </div>
-            </form>
-            </form>
-        </div>
-        
+                    <div className="mb-4">
+                        <label className="block font-semibold">Admitting Physician</label>
+                        <input 
+                            type="text" 
+                            name="admittingPhysician" 
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            placeholder="Admitting Physician" 
+                            onChange={handleChange} 
+                            required 
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block font-semibold">Patient Primary Diagnosis</label>
+                        <input 
+                            type="text" 
+                            name="primaryDiagnosis" 
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            placeholder="Primary Diagnosis" 
+                            onChange={handleChange} 
+                            required 
+                        />
+                    </div>
+
+                    <div className="flex justify-between mt-4">
+                        <button
+                            type="button"
+                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+                            onClick={() => navigate("/h-patientdetails")}
+                        >
+                            Back
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
