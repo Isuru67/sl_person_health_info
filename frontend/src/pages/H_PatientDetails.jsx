@@ -2,14 +2,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DualNavbar from "../components/layout";
+import { useNavigate } from "react-router-dom";
+
 
 const H_PatientDetails = () => {
     const [patients, setPatients] = useState([]);
     const [searchNIC, setSearchNIC] = useState("");
     const [selectedPatient, setSelectedPatient] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get("http://localhost:5000/api/patients")
+        axios.get("http://localhost:5555/api/patients")
             .then((res) => {
                 console.log("API Response:", res.data);
                 setPatients(res.data);
@@ -46,9 +49,13 @@ const H_PatientDetails = () => {
                         <h3>{selectedPatient.name}</h3>
                         <p>NIC: {selectedPatient.nic}</p>
                         <p>Blood Group: {selectedPatient.blood}</p>
-                        <button onClick={() => alert("Treatment functionality here!")}>Treatment</button>
+                        <button  onClick={() => navigate("/ho-admtission")}>Treatment</button>
                     </div>
+                    
                 )}
+                <div className="text-center">
+                    <button  onClick={() => navigate("/h-patientdetails/ho-admtission")}>Next</button>
+                </div>
 
                 <h3>All Patients</h3>
                 {patients && patients.length > 0 ? (
@@ -68,4 +75,4 @@ const H_PatientDetails = () => {
     );
 };
 
-export default H_PatientDetails;
+export default H_PatientDetails
