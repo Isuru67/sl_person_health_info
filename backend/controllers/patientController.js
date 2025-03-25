@@ -13,8 +13,14 @@ export const getPatients = async (req, res) => {
 // Search patient by NIC
 export const getPatientByNIC = async (req, res) => {
     try {
-        const patient = await Patient.findOne({ nic: req.params.nic });
-        if (!patient) return res.status(404).json({ message: "Patient not found" });
+        const nicValue = req.params.nic.trim();  // Ensure no extra spaces
+        console.log("Searching for NIC:", nicValue);
+
+        const patient = await Patient.findOne({ nic: nicValue }); // Search by NIC field
+
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
         res.json(patient);
     } catch (error) {
         res.status(500).json({ message: error.message });

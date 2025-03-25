@@ -50,6 +50,9 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                 <div className="text-center">
                     <button  onClick={() => navigate("/h-patientdetails/medical-history")}>Next</button>
                 </div>
+                <div className="text-center">
+                    <button  onClick={() => navigate("/h-patientdetails")}>Back</button>
+                </div>
             </form>
             </form>
         </div>
