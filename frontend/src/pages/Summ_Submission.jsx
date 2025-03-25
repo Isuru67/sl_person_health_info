@@ -1,5 +1,6 @@
 import React from "react";
 import axios from "axios";
+import DualNavbar from "../components/layout";
 
 const Summ_Submission = ({ formData }) => {
     const handleSubmit = () => {
@@ -16,6 +17,9 @@ const Summ_Submission = ({ formData }) => {
     };
 
     return (
+        <div className="flex flex-col h-screen bg-gray-100">
+                    {/* Top Navigation Bar */}
+                    <DualNavbar />
         <div style={styles.container}>
             <div style={styles.formContainer}>
                 <h2 className="text-center">Review and Submit</h2>
@@ -49,6 +53,7 @@ const Summ_Submission = ({ formData }) => {
                     <button onClick={handleSubmit} className="btn btn-primary">Submit</button>
                 </div>
             </div>
+        </div>
         </div>
     );
 };

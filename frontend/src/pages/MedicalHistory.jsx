@@ -1,5 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import DualNavbar from "../components/layout";
+
+function sendData(e) {
+    e.preventDefault();
+}
 
 const MedicalHistory = ({ formData, setFormData }) => {
     const navigate = useNavigate();
@@ -20,8 +25,13 @@ const MedicalHistory = ({ formData, setFormData }) => {
     };
 
     return (
+        <div className="flex flex-col h-screen bg-gray-100">
+                    {/* Top Navigation Bar */}
+          <DualNavbar />
+          
         <div style={styles.container}>
-            <div style={styles.formContainer}>
+        <form onSubmit={sendData} style={{ width: "30%", minHeight: "40vh",border: "2px solid blue", padding: "20px", borderRadius: "8px", backgroundColor: "rgba(80, 80, 83, 0.34)" }}>
+            
                 <h2 className="text-center">Medical History</h2>
                 <form onSubmit={handleNext}>
                     <div className="mb-3">
@@ -37,10 +47,13 @@ const MedicalHistory = ({ formData, setFormData }) => {
                     </div>
 
                     <div className="text-center">
-                        <button type="submit" className="btn btn-primary">Next</button>
+                        <button onClick={() => navigate("/h-patientdetails/treatment-plan")}>Next</button>
                     </div>
                 </form>
-            </div>
+           
+            </form>
+        </div>
+      
         </div>
     );
 };
@@ -51,14 +64,14 @@ const styles = {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '100vh', // Full viewport height
+        minHeight: '75vh', // Full viewport height
         backgroundColor: '#f8f9fa', // Light background color
     },
     formContainer: {
         backgroundColor: 'white',
         padding: '20px',
         borderRadius: '8px',
-        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+        boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
         maxWidth: '600px',
         width: '100%', // Responsive width
     }
