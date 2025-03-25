@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
-import "../styles/formStyles.css";
+
 
 const MedicalHistory = ({ formData, setFormData }) => {
     const navigate = useNavigate();
@@ -96,7 +96,7 @@ const MedicalHistory = ({ formData, setFormData }) => {
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                             onChange={handleFileChange}
                             multiple 
-                            required
+                            
                         />
                         {/* Display selected files */}
                         {selectedFiles.length > 0 && (
