@@ -31,7 +31,6 @@ const DualNavbar = () => {
         {[
           { name: "Dashboard", icon: <FaTachometerAlt />, path: "/hospitaldashboard" },
           { name: "Patients", icon: <FaUsers />, path: "/h-patientdetails " },
-          { name: "Doctors", icon: <FaUserMd />, path: "/doctors" },
           { name: "Reports", icon: <FaFileAlt />, path: "/reports" },
         ].map((tab) => (
           <Link
