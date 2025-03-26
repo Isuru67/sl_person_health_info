@@ -3,46 +3,24 @@ import { Patient } from "../models/patientModel.js";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import multer from 'multer';
 import { getPatientByNIC } from "../controllers/patientController.js";
 
 dotenv.config();
 
 const router = express.Router();
 
-// Validation functions
-const validateName = (name) => {
-  if (!name) return "Name is required";
-  if (!/^[A-Za-z\s]+$/.test(name)) return "Name must contain only letters and spaces";
-  return null;
-};
+const storage = multer.diskStorage({
+  destination: (request, file, cb) => cb(null, 'uploads/'),
+  filename: (request, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
 
-const validateNIC = (nic) => {
-  if (!nic) return "NIC is required";
-  if (!/^\d+$/.test(nic)) return "NIC must contain only numbers";
-  return null;
-};
-
-const validateTelephone = (tele) => {
-  if (!tele) return "Telephone is required";
-  if (!/^\d{10}$/.test(tele)) return "Telephone must be exactly 10 digits";
-  return null;
-};
-
-const validateEmail = (email) => {
-  if (!email) return "Email is required";
-  if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) return "Email must be a valid Gmail address (e.g., user@gmail.com)";
-  return null;
-};
-
-const validatePassword = (password) => {
-  if (!password) return "Password is required";
-  if (!/^[a-zA-Z0-9]{8,10}$/.test(password)) return "Password must be 8-10 alphanumeric characters";
-  return null;
-};
-
+const upload = multer({ storage });
 // Patient Registration Route
-router.post("/register", async (request, response) => {
-  const { name, nic, dob, blood, tele, email, username, password, pic } = request.body;
+
+router.post('/register', upload.single('pic'), async (req, response) => {
+  const { name, nic, dob, blood, tele, email, username, password } = req.body;
+  const imageName = req.file?.filename || null;
 
   try {
     // Check if patient already exists by NIC
@@ -51,18 +29,6 @@ router.post("/register", async (request, response) => {
       return response.status(400).json({ error: "User already exists with this NIC" });
     }
 
-    // Validate input
-    const errors = [
-      validateName(name),
-      validateNIC(nic),
-      validateTelephone(tele),
-      validateEmail(email),
-      validatePassword(password),
-    ].filter(Boolean);
-
-    if (errors.length > 0) {
-      return response.status(400).json({ error: "Validation failed", details: errors });
-    }
 
     // Hash password using bcrypt
     const salt = await bcrypt.genSalt(10);
@@ -78,7 +44,7 @@ router.post("/register", async (request, response) => {
       email,
       username,
       password: hashedPassword,
-      pic,
+      pic:imageName
     });
 
     await newPatient.save();
