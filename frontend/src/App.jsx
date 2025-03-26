@@ -14,6 +14,7 @@ import MedicalHistory from './pages/MedicalHistory'
 import TreatmentPlan from './pages/TreatmentPlan'
 import ViewTreatment from './pages/ViewTreatment'
 import Innovate from './pages/Innovate';
+import HospitalRegister from './pages/HospitalRegister'
 
 
 const App = () => {
@@ -58,11 +59,12 @@ const App = () => {
         <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
         <Route path='/patient/Delete/:id' element={<DeletePatientProfile/>}/>
         <Route path='/h-patientdetails' element={<H_PatientDetails formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment formData={formData} setFormData={setFormData} />} />
-         <Route path='/innov' element={<Innovate/>} /> 
+        <Route path='/h-patientdetails/ho-admtission' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
+        <Route path='/h-patientdetails/medical-history' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
+        <Route path='/h-patientdetails/treatment-plan' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
+         <Route path='/h-patientdetails/summ-submission' element={<Summ_Submission formData={formData} />} />
+         <Route path='/innov' element={<Innovate/>} />
+         <Route path='/hospital-register' element={<HospitalRegister/>} /> 
         {/*
         <Route path='' element={} />
         <Route path='' element={} />

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import videoFile from '../components/home/bvideo.mp4';
 import './styles.css';
 
@@ -9,6 +10,7 @@ const Home = () => {
   const [password, setPassword] = useState('');
   const [activeNav, setActiveNav] = useState('Home');
   const videoRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Enhanced auto-play with intersection observer
   useEffect(() => {
@@ -115,6 +117,7 @@ const Home = () => {
             </nav>
             
             <div className="hidden md:flex space-x-4">
+            <Link to="/admin">
               <motion.button
                 variants={buttonSpring}
                 whileHover="hover"
@@ -123,14 +126,36 @@ const Home = () => {
               >
                 Sign In
               </motion.button>
-              <motion.button
-                variants={buttonSpring}
-                whileHover="hover"
-                whileTap="tap"
-                className="px-6 py-2 rounded-full bg-white text-purple-600 font-bold shadow-lg"
-              >
-                Register
-              </motion.button>
+              </Link>
+              {/* Register Button with Dropdown */}
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="px-6 py-2 rounded-full bg-white text-purple-600 font-bold shadow-lg"
+        >
+          Register
+        </button>
+
+        {/* Dropdown Menu */}
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-lg rounded-lg">
+            <Link
+              to="/patient/register"
+              className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              onClick={() => setIsOpen(false)}
+            >
+              AS USER
+            </Link>
+            <Link
+              to="/register/hospital"
+              className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              onClick={() => setIsOpen(false)}
+            >
+              AS HOSPITAL
+            </Link>
+          </div>
+        )}
+      </div>
             </div>
             
             <motion.button 
