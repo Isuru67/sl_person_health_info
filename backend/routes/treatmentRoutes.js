@@ -32,7 +32,32 @@ router.post('/treatment/:nic',addTreatment, async (request, response) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+<<<<<<< Updated upstream
+router.get('/treatment/:nic', async (req, res) => {
+    try {
+        const treatment = await Treatment.findOne({ patient_nic: req.params.nic });
+        if (!treatment) {
+            return res.status(404).json({ error: "Treatment not found" });
+=======
+// Get treatment by NIC
+router.get("/api/treatment/:nic", async (req, res) => {
+    try {
+        const treatment = await Treatment.findOne({ nic: req.params.nic });
+        if (!treatment) {
+            return res.status(404).json({ error: "No treatment found for this patient" });
+>>>>>>> Stashed changes
+        }
+        res.json(treatment);
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+
+<<<<<<< Updated upstream
 router.put("/:patientId/treatment/:treatmentId", updateTreatment); // Update treatment
+=======
+>>>>>>> Stashed changes
 router.delete("/:patientId/treatment/:treatmentId", deleteTreatment); // Delete treatment
 
 export default router;

@@ -62,7 +62,7 @@ const App = () => {
         <Route path='/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
+         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} /
          <Route path='/innov' element={<Innovate/>} />
          <Route path='/hospital-register' element={<HospitalRegister/>} /> 
         {/*
