@@ -107,19 +107,6 @@ router.put("/:id", async (request, response) => {
 
     const { name, nic, tele, email, password } = request.body;
 
-    // Validate updated data
-    const errors = [
-      name && validateName(name),
-      nic && validateNIC(nic),
-      tele && validateTelephone(tele),
-      email && validateEmail(email),
-      password && validatePassword(password),
-    ].filter(Boolean);
-
-    if (errors.length > 0) {
-      return response.status(400).json({ error: "Validation failed", details: errors });
-    }
-
     // Hash new password if provided
     if (password) {
       const salt = await bcrypt.genSalt(10);

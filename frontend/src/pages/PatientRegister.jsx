@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 const PatientRegister = () => {
   const navigate = useNavigate();
+
+  const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   
   const [name, setName] = useState('');
   const [nic, setNIC] = useState('');
@@ -85,10 +87,18 @@ const PatientRegister = () => {
         </div>
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>Blood Group</label>
-          <input 
-            type='text' value={blood} onChange={(e) => setBloodGroup(e.target.value)}
+          <select 
+            value={blood} 
+            onChange={(e) => setBloodGroup(e.target.value)}
             className='border-2 border-gray-500 px-4 py-2 w-full'
-          />
+          >
+            <option value="">Select Blood Group</option>
+            {bloodTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
         </div>
         <div className='my-4'>
           <label className='text-xl mr-4 text-gray-500'>Telephone</label>
