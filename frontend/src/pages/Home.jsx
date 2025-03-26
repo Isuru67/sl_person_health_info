@@ -214,7 +214,8 @@ const Home = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 1 }}
             >
-              Experience the future of health information management with our cutting-edge platform.
+              "Transforming healthcare through secure rechords AI-driven insights and seamless
+              hospital interation for smarter and more accessible patient care" .
             </motion.p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <motion.button
