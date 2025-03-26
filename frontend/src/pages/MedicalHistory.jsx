@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
+import { motion } from "framer-motion";
+import { useParams } from "react-router-dom";
 import DualNavbar from "../components/layout";
-
 
 const MedicalHistory = ({ formData, setFormData }) => {
     const navigate = useNavigate();
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const { nic } = useParams();
 
     // Handle input changes
     const handleChange = (e) => {
@@ -28,7 +31,7 @@ const MedicalHistory = ({ formData, setFormData }) => {
     // Handle form submission
     const handleNext = (e) => {
         e.preventDefault(); 
-        navigate("/h-patientdetails/treatment-plan");
+        navigate(`/h-patientdetails/treatment-plan/${nic}`);
     };
 
     return (
@@ -36,69 +39,53 @@ const MedicalHistory = ({ formData, setFormData }) => {
             {/* Top Navigation Bar */}
             <DualNavbar />
 
-            <div className="flex justify-center items-center min-h-screen bg-white p-6">
-                <form onSubmit={handleNext} className="w-full max-w-lg bg-gray-50 p-6 rounded-lg shadow-md">
-                    <h2 className="text-center text-2xl font-semibold mb-4">Medical History</h2>
+            <motion.section 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8 }}
+                className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6"
+            >
+                <motion.form 
+                    onSubmit={handleNext} 
+                    initial={{ scale: 0.9, rotate: -2 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring" }}
+                    className="w-full max-w-lg bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-blue-500"
+                >
+                    <motion.h2 
+                        className="text-center text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600"
+                        initial={{ y: -20 }}
+                        animate={{ y: 0 }}
+                        transition={{ type: "spring" }}
+                    >
+                        Medical History
+                    </motion.h2>
 
-                    <div className="mb-4">
-                        <label className="block font-semibold">Allergies</label>
-                        <input 
-                            type="text" 
-                            name="allergies" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                            placeholder="Allergies" 
-                            onChange={handleChange} 
-                            required 
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block font-semibold">Illnesses</label>
-                        <input 
-                            type="text" 
-                            name="illnesses" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                            placeholder="Illnesses" 
-                            onChange={handleChange} 
-                            required 
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block font-semibold">Medications</label>
-                        <input 
-                            type="text" 
-                            name="medications" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                            placeholder="Medications" 
-                            onChange={handleChange} 
-                            required 
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block font-semibold">Surgeries</label>
-                        <input 
-                            type="text" 
-                            name="surgeries" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                            placeholder="Surgeries" 
-                            onChange={handleChange} 
-                            required 
-                        />
-                    </div>
+                    {['Allergies', 'Illnesses', 'Medications', 'Surgeries', 'Immunizations'].map((field) => (
+                        <div className="mb-4" key={field}>
+                            <label className="block font-semibold">{field}</label>
+                            <motion.input 
+                                whileFocus={{ scale: 1.02, boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)" }}
+                                type="text" 
+                                name={field.toLowerCase()} 
+                                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
+                                placeholder={field} 
+                                onChange={handleChange} 
+                                required 
+                            />
+                        </div>
+                    ))}
 
                     <div className="mb-4">
                         <label className="block font-semibold">Surgeries Report</label>
-                        <input
+                        <motion.input
+                            whileFocus={{ scale: 1.02, boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)" }}
                             type="file"
                             accept="image/*"
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                             onChange={handleFileChange}
                             multiple 
-                            
                         />
-                        {/* Display selected files */}
                         {selectedFiles.length > 0 && (
                             <ul className="mt-2 text-sm text-gray-700">
                                 {selectedFiles.map((file, index) => (
@@ -108,36 +95,30 @@ const MedicalHistory = ({ formData, setFormData }) => {
                         )}
                     </div>
 
-                    <div className="mb-4">
-                        <label className="block font-semibold">Immunizations</label>
-                        <input 
-                            type="text" 
-                            name="immunizations" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                            placeholder="Immunizations" 
-                            onChange={handleChange} 
-                            required 
-                        />
-                    </div>
-
                     <div className="flex justify-between mt-4">
-                        <button
+                        <motion.button
+                            whileHover={{ scale: 1.03, backgroundColor: "rgba(75, 85, 99, 0.9)" }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={{ type: "spring", stiffness: 400 }}
+                            className="px-4 py-2 rounded-lg bg-gray-500 text-white font-bold shadow-lg"
                             type="button"
-                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
                             onClick={() => navigate(-1)}
                         >
                             Back
-                        </button>
+                        </motion.button>
 
-                        <button
+                        <motion.button
+                            whileHover={{ scale: 1.03, background: "linear-gradient(45deg, #3b82f6, #6366f1)" }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={{ type: "spring", stiffness: 400 }}
+                            className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg"
                             type="submit"
-                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
                         >
                             Next
-                        </button>
+                        </motion.button>
                     </div>
-                </form>
-            </div>
+                </motion.form>
+            </motion.section>
         </div>
     );
 };

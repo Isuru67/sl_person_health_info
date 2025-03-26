@@ -210,4 +210,5 @@ router.get('/search/:nic', async (request,response)=>{
     
 });
 
+
 export default router;

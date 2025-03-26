@@ -1,50 +1,79 @@
 import { Patient } from "../models/patientModel.js";
+import { Treatment } from "../models/hospitalModel.js";
 
-// Add Treatment
-export const addTreatment = async (req, res) => {
+//  Add Treatment for a Patient (Find by NIC)
+export const addTreatment = async (request, response) => {
     try {
-        const patient = await Patient.findById(req.params.patientId);
-        if (!patient) return res.status(404).json({ message: "Patient not found" });
+        const { nic } = request.params;  // Get NIC from the request params
+        const {
+            ho_admissionDetails,
+            medicalHistory,
+            treatmentPlan,
+        } = request.body;
 
-        patient.treatments = patient.treatments || [];
-        patient.treatments.push(req.body);
-        await patient.save();
+        // Step 1: Find the patient using the NIC from the Patient model
+        const patient = await Patient.findOne({ nic });
+        if (!patient) {
+            return response.status(404).json({ message: "Patient not found" });
+        }
 
-        res.json({ message: "Treatment added", treatments: patient.treatments });
+        // Step 2: Create a new treatment document
+        const newTreatment = new Treatment({
+            patient_nic: nic,  // Link the treatment to the patient using the patient's _id
+            ho_admissionDetails,
+            medicalHistory,
+            treatmentPlan,
+        });
+
+        // Step 3: Save the treatment document
+        await newTreatment.save();
+
+        // Step 4: Respond with the saved treatment data
+        response.status(201).json({
+            message: "Treatment added successfully",
+            treatment: newTreatment,
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error adding treatment:", error);
+        res.status(500).json({ message: "Error adding treatment", error: error.message });
     }
 };
 
-// Update Treatment
+// 🔹 Update Treatment for a Patient (Find by NIC)
 export const updateTreatment = async (req, res) => {
     try {
-        const patient = await Patient.findById(req.params.patientId);
+        const { nic, treatmentId } = req.params;
+        const { description, date } = req.body;
+
+        const patient = await Patient.findOne({ nic });
         if (!patient) return res.status(404).json({ message: "Patient not found" });
 
-        const treatment = patient.treatments.id(req.params.treatmentId);
+        const treatment = patient.treatments.id(treatmentId);
         if (!treatment) return res.status(404).json({ message: "Treatment not found" });
 
-        Object.assign(treatment, req.body);
+        treatment.description = description || treatment.description;
+        treatment.date = date || treatment.date;
         await patient.save();
 
-        res.json({ message: "Treatment updated", treatments: patient.treatments });
+        res.status(200).json({ message: "Treatment updated", treatments: patient.treatments });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Error updating treatment", error: error.message });
     }
 };
 
-// Delete Treatment
+// 🔹 Delete Treatment for a Patient (Find by NIC)
 export const deleteTreatment = async (req, res) => {
     try {
-        const patient = await Patient.findById(req.params.patientId);
+        const { nic, treatmentId } = req.params;
+
+        const patient = await Patient.findOne({ nic });
         if (!patient) return res.status(404).json({ message: "Patient not found" });
 
-        patient.treatments = patient.treatments.filter(t => t._id.toString() !== req.params.treatmentId);
+        patient.treatments = patient.treatments.filter(t => t._id.toString() !== treatmentId);
         await patient.save();
 
-        res.json({ message: "Treatment deleted", treatments: patient.treatments });
+        res.status(200).json({ message: "Treatment deleted", treatments: patient.treatments });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Error deleting treatment", error: error.message });
     }
 };
