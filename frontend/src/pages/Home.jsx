@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import videoFile from '../components/home/bvideo.mp4';
 import './styles.css';
@@ -28,6 +29,7 @@ const Home = () => {
 
     return () => {
       if (videoRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         observer.unobserve(videoRef.current);
       }
     };

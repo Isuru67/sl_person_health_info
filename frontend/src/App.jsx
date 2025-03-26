@@ -12,16 +12,39 @@ import H_PatientDetails from './pages/H_PatientDetails'
 import Ho_AdmissionDetails from './pages/Ho_AdmissionDetails'
 import MedicalHistory from './pages/MedicalHistory'
 import TreatmentPlan from './pages/TreatmentPlan'
-import Summ_Submission from './pages/Summ_Submission'
+import ViewTreatment from './pages/ViewTreatment'
 import Innovate from './pages/Innovate';
 
 
 const App = () => {
   const [formData, setFormData] = useState({
-    
-    ho_admissionDetai: {}, 
-    medicalHistory: {}, 
-    treatmentPlan: {}
+    patient: {
+        name: "",
+        nic: "",
+        dob: "",
+        blood: "",
+        tele: "",
+        email: ""
+    },
+    ho_admissionDetails: {
+        admissionDate: "",
+        admittingPhysician: "",
+        primaryDiagnosis: ""
+    },
+    medicalHistory: {
+        allergies: [],
+        illnesses: [],
+        medications: [],
+        surgeries: [],
+        su_imaging: [],
+        immunizations: []
+    },
+    treatmentPlan: {
+        medications: [],
+        labTests: [],
+        te_imaging: [],
+        therapies: []
+    }
 });
 
   return (
@@ -29,16 +52,16 @@ const App = () => {
         <Route path='/' element={<Home/>} />
         <Route path='/admin' element={<AdminLogin/>} />       
         <Route path='/user' element={<UserLogin/>} />
-        <Route path='/hospitaldashboard' element={<HospitalDashboard formData={formData} setFormData={setFormData} />} />
+        <Route path='/hospitaldashboard' element={<HospitalDashboard />} />
         <Route path='/patient/register' element={<PatientRegister/>}/>
         <Route path='/patient/view/:id' element={<ViewPatientProfile/>}/>
         <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
         <Route path='/patient/Delete/:id' element={<DeletePatientProfile/>}/>
         <Route path='/h-patientdetails' element={<H_PatientDetails formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/ho-admtission' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/medical-history' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
-        <Route path='/h-patientdetails/treatment-plan' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-         <Route path='/h-patientdetails/summ-submission' element={<Summ_Submission formData={formData} />} />
+        <Route path='/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
+        <Route path='/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
+        <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
+        <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment formData={formData} setFormData={setFormData} />} />
          <Route path='/innov' element={<Innovate/>} /> 
         {/*
         <Route path='' element={} />

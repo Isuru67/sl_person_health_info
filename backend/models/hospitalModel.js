@@ -5,9 +5,9 @@ const Schema = mongoose.Schema;
 
 const patient_hSchema = new Schema({
     ho_admissionDetails: {
-        admissionDate: String,
-        admittingPhysician: String,
-        primaryDiagnosis: String,
+        admissionDate: [String],
+        admittingPhysician: [String],
+        primaryDiagnosis: [String],
     },
     medicalHistory: {
         allergies: [String],
@@ -18,11 +18,16 @@ const patient_hSchema = new Schema({
         immunizations:[String],
     },
     treatmentPlan: {
-        medications: [{ name: String, dosage: String, route: String, frequency: String }],
+        medications: [ String ],
         labTests: [String],
         te_imaging: [String],
         therapies: [String],
-    }
+    },
+
+    patient_nic: {  // Store the patient's NIC directly here
+        type: String,   // NIC will be stored as a String
+        required: true, // Ensure NIC is required
+    },
   
   
 });
