@@ -32,6 +32,19 @@ router.post('/treatment/:nic',addTreatment, async (request, response) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+router.get('/treatment/:nic', async (req, res) => {
+    try {
+        const treatment = await Treatment.findOne({ patient_nic: req.params.nic });
+        if (!treatment) {
+            return res.status(404).json({ error: "Treatment not found" });
+        }
+        res.json(treatment);
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+
 router.put("/:patientId/treatment/:treatmentId", updateTreatment); // Update treatment
 router.delete("/:patientId/treatment/:treatmentId", deleteTreatment); // Delete treatment
 
