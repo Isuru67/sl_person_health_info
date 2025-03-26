@@ -1,7 +1,8 @@
-import express from "express";
+import express, { request, response } from "express";
 import { addTreatment, updateTreatment, deleteTreatment } from "../controllers/treatmentController.js";
 import { Patient } from "../models/patientModel.js";
 import { Treatment } from "../models/hospitalModel.js";
+
 
 const router = express.Router();
 
@@ -55,6 +56,46 @@ router.get("/treatment/:nic", async (req, res) => {
     res.json(treatment);
 });
 
+<<<<<<< Updated upstream
 router.delete("/:patientId/treatment/:treatmentId", deleteTreatment); // Delete treatment
+=======
+router.put("/treatment/:nic", async (req, res) => {
+    try {
+        const updatedTreatment = await Treatment.findOneAndUpdate(
+            { patient_nic: req.params.nic },
+            req.body,
+            { new: true }
+        );
+
+        if (!updatedTreatment) {
+            return res.status(404).json({ message: "Treatment not found" });
+        }
+
+        res.json(updatedTreatment);
+    } catch (error) {
+        console.error("Error updating treatment:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Delete treatment by NIC
+router.delete("/api/treatment/:nic", async (req, res) => {
+    try {
+        const { nic } = req.params;
+        const deletedTreatment = await Treatment.findOneAndDelete({ patient_nic: nic });
+
+        if (!deletedTreatment) {
+            return res.status(404).json({ message: "Treatment not found" });
+        }
+
+        res.json({ message: "Treatment deleted successfully" });
+    } catch (error) {
+        console.error("Server error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+
+>>>>>>> Stashed changes
 
 export default router;

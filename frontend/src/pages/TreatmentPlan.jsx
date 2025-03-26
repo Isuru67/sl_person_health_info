@@ -46,7 +46,7 @@ const TreatmentPlan = ({ formData, setFormData }) => {
 
 
         try {
-            const response = await fetch(`http://localhost:5555/api/treatment/${nic}`, {
+            const response = await fetch(`http://localhost:5555/treatment/${nic}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

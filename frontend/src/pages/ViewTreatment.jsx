@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
@@ -23,6 +24,19 @@ const ViewTreatment = () => {
                 }
             });
     }, [nic]);
+
+    const handleDelete = async () => {
+        try {
+            const response = await axios.delete(`http://localhost:5555/treatment/${nic}`);
+            console.log("Delete response:", response);
+            alert("Treatment deleted successfully");
+            navigate("/h-patientdetails"); // Redirect to patient details page after deletion
+        } catch (error) {
+            console.error("Error deleting treatment:", error.response ? error.response.data : error.message);
+            alert(`Error deleting treatment: ${error.response?.data?.message || "Server error"}`);
+        }
+    };
+    
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
@@ -117,7 +131,7 @@ const ViewTreatment = () => {
                                     Update
                                 </button>
                                 <button
-                                    onClick={() => alert('Delete function')}
+                                    onClick={handleDelete} // Trigger the delete function
                                     className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
                                 >
                                     Delete
