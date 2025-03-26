@@ -14,8 +14,8 @@ import MedicalHistory from './pages/MedicalHistory'
 import TreatmentPlan from './pages/TreatmentPlan'
 import Summ_Submission from './pages/Summ_Submission'
 import Innovate from './pages/Innovate';
-import HospitalRegister from './pages/HospitalRegister'
-import AdminDashboard from './pages/AdminDashboard'
+import HospitalRegister from './pages/HospitalRegister';
+import AdminDashboard from './pages/AdminDashboard';
 
 
 const App = () => {
@@ -44,6 +44,7 @@ const App = () => {
          <Route path='/innov' element={<Innovate/>} />
          <Route path='/hospital-register' element={<HospitalRegister/>} />
          <Route path='/admin-dashboard' element={<AdminDashboard/>} />
+         <Route path='/hospital-register' element={<HospitalRegister/>} /> 
         {/*
         <Route path='' element={} />
         <Route path='' element={} />

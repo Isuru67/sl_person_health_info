@@ -7,6 +7,7 @@ const hospitalSchema = mongoose.Schema(
         required: true,
         default: 'H0001'  // Default starting ID
         },
+
         hospitalName: {
             type: String,
             required: true,
@@ -17,6 +18,7 @@ const hospitalSchema = mongoose.Schema(
         },
         mobile1: {
             type: String,
+            type: Date,
             required: true,
         },
         mobile2: {
