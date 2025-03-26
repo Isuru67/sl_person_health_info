@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [hospitals, setHospitals] = useState([]);
+  const navigate = useNavigate(); // Use navigate for routing
 
   useEffect(() => {
     const fetchHospitals = async () => {
@@ -18,19 +20,17 @@ const AdminDashboard = () => {
   }, []);
 
   const handleView = (hospitalId) => {
-    console.log(`View hospital: ${hospitalId}`);
-    // Navigate to view details page (if applicable)
+    navigate(`/hospital-view/${hospitalId}`);
   };
 
   const handleEdit = (hospitalId) => {
-    console.log(`Edit hospital: ${hospitalId}`);
-    // Implement edit logic (e.g., navigate to edit form)
+    navigate(`/hospital-edit/${hospitalId}`);
   };
 
   const handleDelete = async (hospitalId) => {
     if (window.confirm("Are you sure you want to delete this hospital?")) {
       try {
-        const response = await fetch(`http://localhost:5555/hospitaldashboard/hospitals/${hospitalId}`, {
+        const response = await fetch(`http://localhost:5555/hospitaldashboard/${hospitalId}`, {
           method: "DELETE",
         });
 
