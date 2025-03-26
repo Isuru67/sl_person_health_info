@@ -86,7 +86,7 @@ const EditHospital = () => {
         <button className='p-2 bg-sky-300 m-8' onClick={handleEditHospital}>
           Save Changes
         </button>
-        <button className='p-2 bg-gray-300 m-8' onClick={() => navigate('/')}>
+        <button className='p-2 bg-gray-300 m-8' onClick={() => navigate('/admin-dashboard')}>
           Cancel
         </button>
       </div>
