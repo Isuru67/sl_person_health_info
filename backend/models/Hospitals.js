@@ -1,7 +1,12 @@
 import mongoose from "mongoose";
 
 const hospitalSchema = mongoose.Schema(
-    {
+    {   hospitalId: {
+        type: String,
+        unique: true,
+        required: true,
+        default: 'H0001'  // Default starting ID
+        },
         hospitalName: {
             type: String,
             required: true,
@@ -11,7 +16,7 @@ const hospitalSchema = mongoose.Schema(
             required: true,
         },
         mobile1: {
-            type: Date,
+            type: String,
             required: true,
         },
         mobile2: {
@@ -25,7 +30,11 @@ const hospitalSchema = mongoose.Schema(
             type: String,
             required: true,
         },
-        
+        status: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected'],
+            default: 'pending'
+          },
     },
     {
         timestamps: true,
