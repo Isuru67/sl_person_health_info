@@ -1,7 +1,8 @@
-import express from "express";
+import express, { request, response } from "express";
 import { addTreatment, updateTreatment, deleteTreatment } from "../controllers/treatmentController.js";
 import { Patient } from "../models/patientModel.js";
 import { Treatment } from "../models/hospitalModel.js";
+
 
 const router = express.Router();
 
@@ -32,20 +33,11 @@ router.post('/treatment/:nic',addTreatment, async (request, response) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
-<<<<<<< Updated upstream
 router.get('/treatment/:nic', async (req, res) => {
     try {
         const treatment = await Treatment.findOne({ patient_nic: req.params.nic });
         if (!treatment) {
             return res.status(404).json({ error: "Treatment not found" });
-=======
-// Get treatment by NIC
-router.get("/api/treatment/:nic", async (req, res) => {
-    try {
-        const treatment = await Treatment.findOne({ nic: req.params.nic });
-        if (!treatment) {
-            return res.status(404).json({ error: "No treatment found for this patient" });
->>>>>>> Stashed changes
         }
         res.json(treatment);
     } catch (error) {
@@ -54,10 +46,25 @@ router.get("/api/treatment/:nic", async (req, res) => {
 });
 
 
-<<<<<<< Updated upstream
-router.put("/:patientId/treatment/:treatmentId", updateTreatment); // Update treatment
-=======
->>>>>>> Stashed changes
+router.put("/treatment/:nic", async (req, res) => {
+    try {
+        const updatedTreatment = await Treatment.findOneAndUpdate(
+            { patient_nic: req.params.nic },
+            req.body,
+            { new: true }
+        );
+
+        if (!updatedTreatment) {
+            return res.status(404).json({ message: "Treatment not found" });
+        }
+
+        res.json(updatedTreatment);
+    } catch (error) {
+        console.error("Error updating treatment:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 router.delete("/:patientId/treatment/:treatmentId", deleteTreatment); // Delete treatment
 
-export default router;
+export default router;
