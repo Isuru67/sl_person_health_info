@@ -147,7 +147,7 @@ const Home = () => {
               AS USER
             </Link>
             <Link
-              to="/register/hospital"
+              to="/hospital-register"
               className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
               onClick={() => setIsOpen(false)}
             >
