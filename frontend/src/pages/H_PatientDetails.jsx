@@ -109,4 +109,6 @@ const H_PatientDetails = () => {
     );
 };
 
+
+
 export default H_PatientDetails;

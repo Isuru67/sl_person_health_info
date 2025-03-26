@@ -13,6 +13,7 @@ import Ho_AdmissionDetails from './pages/Ho_AdmissionDetails'
 import MedicalHistory from './pages/MedicalHistory'
 import TreatmentPlan from './pages/TreatmentPlan'
 import ViewTreatment from './pages/ViewTreatment'
+import UpdateTreatment  from './pages/UpdateTreatment'
 import Innovate from './pages/Innovate';
 import HospitalRegister from './pages/HospitalRegister'
 
@@ -62,7 +63,8 @@ const App = () => {
         <Route path='/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} /
+         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
+         <Route path='/h-patientdetails/update/:nic' element={<UpdateTreatment  />} />
          <Route path='/innov' element={<Innovate/>} />
          <Route path='/hospital-register' element={<HospitalRegister/>} /> 
         {/*
