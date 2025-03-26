@@ -1,52 +1,67 @@
-import express from "express";
-import {Treatment} from "../models/hospitalModel.js"
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import multer from 'multer';
+import path from 'path';
+import {Hospital} from '../models/Hospitals.js';
 
+dotenv.config();
 const router = express.Router();
 
-//**Add a New Patient**
-router.post("/pregister", async (req, res) => {
-    try {
-        const newH_Patient = new Hospital_Patient(req.body);
-        await newH_Patient.save();
-        res.status(201).json(newH_Patient);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+// Configure Multer for file upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Store uploaded files in the "uploads" folder
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}-${file.originalname}`); // Rename file with timestamp
+  }
 });
 
+const upload = multer({ storage });
 
-// router.post('/a', async (request, response) => {
-//     try {
-//         // Log the incoming request body to check the data being sent
-//         console.log("Request Body:", request.body);
+// Hospital registration route (supports file upload)
+router.post('/hospital/register', upload.single('image'), async (req, res) => {
+  const { hospitalName, email, mobile1, mobile2, password } = req.body;
+  const imageName = req.file ? req.file.filename : null;
 
-//         // Constructing the new manager object
-//         const newManager = {
-//             name: request.body.name,  // Match the schema field 'name'
-//             uname: request.body.uname, // Match the schema field 'uname'
-//         };
-        
-//         // Log the new manager object to check its structure before saving
-//         console.log("New Manager Object:", newManager);
+  try {
+    // Check if hospital already exists
+    const existingHospital = await Hospital.findOne({ email });
+    if (existingHospital) {
+      return res.status(400).json({ message: 'Hospital already registered' });
+    }
 
-//         // Save the manager to the database
-//         const manager = await Hospital.create(newManager);
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-//         // Log the result of the database operation
-//         console.log("Manager Created:", manager);
+    // Create new hospital
+    const newHospital = new Hospital({
+      hospitalName,
+      email,
+      mobile1,
+      mobile2,
+      password: hashedPassword,
+      certificateImage: imageName, // Store file path in DB
+    });
 
-//         // Respond with the created manager data
-//         return response.status(201).send(manager);
-//     } catch (error) {
-//         // Log any error that occurs
-//         console.log("Error:", error.message);
+    // Save to database
+    await newHospital.save();
 
-//         // Send the error response
-//         response.status(500).send({ message: error.message });
-//     }
-//});  
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: newHospital._id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1h' }
+    );
 
-
-
+    res.status(201).json({ token, message: "Hospital registered successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 export default router;
