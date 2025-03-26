@@ -8,7 +8,7 @@ import { Hospital } from '../models/Hospitals.js';
 
 dotenv.config();
 const router = express.Router();
-
+// add comment
 // Configure Multer for file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
