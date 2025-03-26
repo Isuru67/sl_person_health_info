@@ -14,6 +14,7 @@ const ViewTreatment = () => {
                 console.log("Fetched Treatment:", res.data);
                 setTreatment(res.data);
             })
+<<<<<<< Updated upstream
             .catch((error) => {
                 if (error.response?.status === 404) {
                     console.warn("No treatment record found for this NIC.");
@@ -22,6 +23,9 @@ const ViewTreatment = () => {
                     console.error("Error fetching treatment:", error);
                 }
             });
+=======
+            .catch((error) => console.error("Error fetching treatment:", error));
+>>>>>>> Stashed changes
     }, [nic]);
 
     return (
@@ -32,6 +36,7 @@ const ViewTreatment = () => {
                 <h2 className="text-2xl font-semibold text-center mb-4">Patient Treatment Details</h2>
 
                 {treatment ? (
+<<<<<<< Updated upstream
                     <div className="bg-white p-6 rounded-lg shadow-lg max-w-full mx-auto">
                         <h3 className="text-xl font-semibold mb-4">Patient NIC: {treatment.patient_nic}</h3>
 
@@ -124,6 +129,21 @@ const ViewTreatment = () => {
                                 </button>
                             </div>
                         </div>
+=======
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto">
+                        <h3 className="text-xl font-semibold mb-2">{treatment.patientName}</h3>
+                        <p><strong>NIC:</strong> {treatment.nic}</p>
+                        <p><strong>Admission Date:</strong> {new Date(treatment.ho_admissionDetails.admissionDate).toLocaleDateString()}</p>
+                        <p><strong>Admitting Physician:</strong> {treatment.ho_admissionDetails.admittingPhysician}</p>
+                        <p><strong>Primary Diagnosis:</strong> {treatment.ho_admissionDetails.primaryDiagnosis}</p>
+
+                        <button 
+                            onClick={() => navigate("/h-patientdetails")} 
+                            className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                        >
+                            Back
+                        </button>
+>>>>>>> Stashed changes
                     </div>
                 ) : (
                     <p className="text-center text-gray-600">No treatment found for this patient.</p>
