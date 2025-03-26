@@ -15,6 +15,7 @@ import TreatmentPlan from './pages/TreatmentPlan'
 import ViewTreatment from './pages/ViewTreatment'
 import Innovate from './pages/Innovate';
 import HospitalRegister from './pages/HospitalRegister'
+import AdminDashboard from './pages/AdminDashboard'
 
 
 const App = () => {
@@ -62,9 +63,11 @@ const App = () => {
         <Route path='/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} /
+         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
          <Route path='/innov' element={<Innovate/>} />
-         <Route path='/hospital-register' element={<HospitalRegister/>} /> 
+         <Route path='/hospital-register' element={<HospitalRegister/>} />
+         <Route path='/hospital-register' element={<HospitalRegister/>} />
+         <Route path='/admin-dashboard' element={<AdminDashboard/>} /> 
         {/*
         <Route path='' element={} />
         <Route path='' element={} />
