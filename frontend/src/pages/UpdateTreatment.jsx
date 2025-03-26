@@ -39,7 +39,7 @@ const UpdateTreatment = () => {
             .then((res) => {
                 console.log("API Response:", res.data); // Debugging
                 if (res.data && res.data.ho_admissionDetails) {
-                    setFormData(res.data.data);
+                    setFormData(res.data);
                 } else {
                     console.error("Invalid or empty response.");
                     alert("No treatment data available.");
@@ -60,28 +60,34 @@ const UpdateTreatment = () => {
     const handleChange = (e) => {
         const { name, value, type } = e.target;
         const keys = name.split(".");
-    
+        
         setFormData((prevData) => {
             const updatedData = { ...prevData };
             let ref = updatedData;
     
+            // Navigate to the correct nested object
             for (let i = 0; i < keys.length - 1; i++) {
                 ref = ref[keys[i]];
             }
     
-            ref[keys[keys.length - 1]] = type === "file" ? Array.from(e.target.files) : value;
+            // Update the value based on the input type
+            if (type === "file") {
+                const files = Array.from(e.target.files);
+                ref[keys[keys.length - 1]] = files;
+            } else {
+                ref[keys[keys.length - 1]] = value;
+            }
     
-            return { ...updatedData };
+            return updatedData;
         });
     };
-    
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+    
         try {
             await axios.put(`http://localhost:5555/api/treatment/${nic}`, formData, {
-                headers: { "Content-Type": "application/json" } 
+                headers: { "Content-Type": "application/json" }
             });
     
             alert("Treatment updated successfully.");

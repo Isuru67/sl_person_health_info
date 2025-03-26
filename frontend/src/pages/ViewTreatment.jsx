@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
@@ -25,17 +24,21 @@ const ViewTreatment = () => {
             });
     }, [nic]);
 
+    // ✅ Working Delete Function
     const handleDelete = async () => {
+        if (!window.confirm("Are you sure you want to delete this treatment record?")) return;
+    
         try {
-            const response = await axios.delete(`http://localhost:5555/treatment/${nic}`);
+            const response = await axios.delete(`http://localhost:5555/api/treatments/${nic}`);  // Ensure the correct endpoint
             console.log("Delete response:", response);
-            alert("Treatment deleted successfully");
+            alert("Treatment deleted successfully!");
             navigate("/h-patientdetails"); // Redirect to patient details page after deletion
         } catch (error) {
             console.error("Error deleting treatment:", error.response ? error.response.data : error.message);
             alert(`Error deleting treatment: ${error.response?.data?.message || "Server error"}`);
         }
     };
+    
     
 
     return (
@@ -78,7 +81,6 @@ const ViewTreatment = () => {
                                     <th className="px-4 py-2 border">Surgeries</th>
                                     <th className="px-4 py-2 border">Surgeries Report</th>
                                     <th className="px-4 py-2 border">Immunizations</th>
-   
                                 </tr>
                             </thead>
                             <tbody>
@@ -131,7 +133,7 @@ const ViewTreatment = () => {
                                     Update
                                 </button>
                                 <button
-                                    onClick={handleDelete} // Trigger the delete function
+                                    onClick={handleDelete} // ✅ Fixed delete button
                                     className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
                                 >
                                     Delete
