@@ -142,14 +142,18 @@ const PatientRegister = () => {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5555/patient/register', formDataToSend, {
+      const response =await axios.post('http://localhost:5555/patient/register', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      setLoading(false);
-      navigate('/');
+      // Store the token in localStorage
+    localStorage.setItem('patientToken', response.data.token);
+    
+    setLoading(false);
+    // Navigate to profile page with the new patient's ID
+    navigate(`/patient/view/${response.data.patient._id}`)
     } catch (error) {
       setLoading(false);
       alert('An error occurred. Please check the console.');

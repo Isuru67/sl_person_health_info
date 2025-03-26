@@ -26,7 +26,7 @@ const ViewPatientProfile = () => {
   }, [id]);
 
   const handleEditPatient = () => {
-    navigate(`/edit-patient/${id}`);
+    navigate(`/patient/Edit/${id}`);
   };
   const handleDeletePatient = () => {
     if (window.confirm('Are you sure you want to delete this patient profile?')) {

@@ -54,7 +54,7 @@ const EditPatientProfile = () => {
       .put(`http://localhost:5555/patient/${id}`, patient)
       .then(() => {
         setLoading(false);
-        navigate(`/patient/${id}`);
+        navigate(`/patient/view/${id}`);
       })
       .catch((error) => {
         setLoading(false);
@@ -322,7 +322,7 @@ const EditPatientProfile = () => {
                 variants={buttonSpring}
                 whileHover="hover"
                 whileTap="tap"
-                onClick={() => navigate(`/patient/${id}`)}
+                onClick={() => navigate(`/patient/view/${id}`)}
                 className="px-6 py-2 rounded-lg bg-gray-300 text-gray-800 font-medium shadow-md"
               >
                 Cancel
