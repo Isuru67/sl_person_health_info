@@ -16,7 +16,7 @@ import ViewTreatment from './pages/ViewTreatment'
 import UpdateTreatment  from './pages/UpdateTreatment'
 import Innovate from './pages/Innovate';
 import HospitalRegister from './pages/HospitalRegister'
-import UpdateTreatment from './pages/UpdateTreatment'
+
 
 
 const App = () => {
@@ -64,13 +64,8 @@ const App = () => {
         <Route path='/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-<<<<<<< Updated upstream
          <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
          <Route path='/h-patientdetails/update/:nic' element={<UpdateTreatment  />} />
-=======
-        <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
-        <Route path='/h-patientdetails/update/:nic' element={<UpdateTreatment />} />
->>>>>>> Stashed changes
          <Route path='/innov' element={<Innovate/>} />
          <Route path='/hospital-register' element={<HospitalRegister/>} /> 
         {/*
