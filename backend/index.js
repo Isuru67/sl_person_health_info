@@ -24,7 +24,7 @@ app.get('/',(request,response)=>{
     });
 
 app.use('/admin', adminRoutes);
-app.use('/Hospital_Patient', hospitalRoutes);
+app.use('/hospitaldashboard', hospitalRoutes);
 app.use('/patient', patientRoutes);
 app.use('/ino', innovRoutes);
 

@@ -1,5 +1,5 @@
 import express from "express";
-import {Hospital_Patient} from "../models/hospitalModel.js"
+import {Treatment} from "../models/hospitalModel.js"
 
 const router = express.Router();
 

@@ -31,6 +31,7 @@ const AdminLogin = () => {
       } else if (role === 'admin') {
         navigate('/admin');
       }
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setError('Invalid username or password');
     }

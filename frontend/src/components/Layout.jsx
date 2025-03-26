@@ -9,7 +9,7 @@ const DualNavbar = () => {
   return (
     <div className="w-full">
       {/* Top Navigation Bar */}
-      <div className="bg-blue-800 text-white flex justify-between items-center px-4 py-2 shadow-md">
+      <div className="bg-blue-600 text-white flex justify-between items-center px-6 py- shadow-md">
         <h1 className="text-xl font-bold tracking-wide">City Hospital</h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -27,11 +27,10 @@ const DualNavbar = () => {
       </div>
 
       {/* Second Navigation Bar - Enhanced Styling */}
-      <div className="bg-blue-700 text-white flex gap-2 py-2 px-4 shadow">
+      <div className="bg-blue-500 text-white flex gap-2 py-2 px-4 shadow">
         {[
           { name: "Dashboard", icon: <FaTachometerAlt />, path: "/hospitaldashboard" },
-          { name: "Patients", icon: <FaUsers />, path: "/h-patientdetails" },
-          { name: "Doctors", icon: <FaUserMd />, path: "/doctors" },
+          { name: "Patients", icon: <FaUsers />, path: "/h-patientdetails " },
           { name: "Reports", icon: <FaFileAlt />, path: "/reports" },
         ].map((tab) => (
           <Link

@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import DualNavbar from "../components/layout";
 
 const TreatmentPlan = ({ formData, setFormData }) => {
     const navigate = useNavigate();
@@ -15,30 +16,49 @@ const TreatmentPlan = ({ formData, setFormData }) => {
     };
 
     const handleNext = (e) => {
-        e.preventDefault(); // Prevent default form submission
-        navigate("/summ-submission");
+        e.preventDefault(); 
+        navigate("/h-patientdetails/summ-submission");
     };
 
     return (
-        <div className="container" style={{ backgroundColor: "white", padding: "20px", borderRadius: "8px", boxShadow: "0 0 10px rgba(0,0,0,0.1)", maxWidth: "600px", margin: "auto" }}>
-            <h2 className="text-center">Treatment Plan</h2>
-            <form onSubmit={handleNext}>
-                <div className="mb-3">
-                    <label htmlFor="medications" className="form-label"><h6>Medications</h6></label>
-                    <input 
-                        type="text" 
-                        name="medications" 
-                        className="form-control" 
-                        placeholder="Medications" 
-                        onChange={handleChange} 
-                        required 
-                    />
-                </div>
+        <div className="flex flex-col h-screen bg-gray-100">
+            {/* Top Navigation Bar */}
+            <DualNavbar />
 
-                <div className="text-center">
-                    <button type="submit" className="btn btn-primary">Next</button>
-                </div>
-            </form>
+            <div className="flex justify-center items-center min-h-screen bg-white p-6">
+                <form onSubmit={handleNext} className="w-full max-w-lg bg-gray-50 p-6 rounded-lg shadow-md">
+                    <h2 className="text-center text-2xl font-semibold mb-4">Treatment Plan</h2>
+
+                    <div className="mb-4">
+                        <label className="block font-semibold">Medications</label>
+                        <input 
+                            type="text" 
+                            name="medications" 
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
+                            placeholder="Medications" 
+                            onChange={handleChange} 
+                            required 
+                        />
+                    </div>
+
+                    <div className="flex justify-between mt-4">
+                        <button
+                            type="button"
+                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+                            onClick={() => navigate(-1)}
+                        >
+                            Back
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
