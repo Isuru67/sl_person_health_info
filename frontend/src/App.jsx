@@ -16,6 +16,8 @@ import ViewTreatment from './pages/ViewTreatment'
 import Innovate from './pages/Innovate';
 import HospitalRegister from './pages/HospitalRegister'
 import AdminDashboard from './pages/AdminDashboard'
+import ViewHospital from './pages/ViewHospital'
+import EditHospital from './pages/EditHospital'
 
 
 const App = () => {
@@ -66,8 +68,9 @@ const App = () => {
          <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
          <Route path='/innov' element={<Innovate/>} />
          <Route path='/hospital-register' element={<HospitalRegister/>} />
-         <Route path='/hospital-register' element={<HospitalRegister/>} />
-         <Route path='/admin-dashboard' element={<AdminDashboard/>} /> 
+         <Route path='/hospital-view/:hospitalId' element={<ViewHospital/>} />
+         <Route path='/admin-dashboard' element={<AdminDashboard/>} />
+         <Route path='/hospital-edit/:hospitalId' element={<EditHospital/>} /> 
         {/*
         <Route path='' element={} />
         <Route path='' element={} />

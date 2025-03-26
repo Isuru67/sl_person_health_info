@@ -106,10 +106,10 @@ router.get('/hospitals', async (req, res) => {
 
 
 
-router.get("/:id", async (request, response) => {
+router.get("/:hospitalId", async (request, response) => {
   try {
-    const { id } = request.params;
-    const hospital = await Hospital.findById(id);
+    const hospitalId = request.params.hospitalId;
+    const hospital = await Hospital.findOne({ hospitalId });
 
     if (!hospital) {
       return response.status(404).json({ error: "hospital not found" });
@@ -121,6 +121,35 @@ router.get("/:id", async (request, response) => {
     return response.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
+
+router.put("/:hospitalId", async (request, response) => {
+  try {
+    const { hospitalId } = request.params;
+    const { status } = request.body;
+
+    // Ensure status is a valid value
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return response.status(400).json({ error: "Invalid status value" });
+    }
+
+    // Find and update the hospital's status
+    const updatedHospital = await Hospital.findOneAndUpdate(
+      { hospitalId },
+      { status }, // Only update the status field
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedHospital) {
+      return response.status(404).json({ error: "Hospital not found" });
+    }
+
+    return response.status(200).json(updatedHospital);
+  } catch (error) {
+    console.error("Error updating hospital status:", error);
+    return response.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
+});
+
 
 
 
@@ -135,5 +164,23 @@ router.get('/hospital/certificate/:id', async (req, res) => {
   res.sendFile(imagePath);
 });
 
+router.delete("/:hospitalId", async (request, response) => {
+  try {
+    const { hospitalId } = request.params;
+
+    // Check if hospital exists
+    const hospital = await Hospital.findOne({ hospitalId });
+    if (!hospital) {
+      return response.status(404).json({ error: "Hospital not found" });
+    }
+
+    // Delete the hospital using hospitalId
+    await Hospital.findOneAndDelete({ hospitalId });
+    return response.status(200).json({ message: "Hospital deleted successfully" });
+  } catch (error) {
+    console.error("Error while deleting hospital:", error);
+    return response.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
+});
 
 export default router;
