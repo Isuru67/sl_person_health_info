@@ -30,6 +30,15 @@ const PatientRegister = () => {
 
   const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
 
+  // Get today's date in YYYY-MM-DD format for date input max attribute
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Validation functions
   const validateName = (name) => {
     const nameRegex = /^[A-Za-z\s]{2,50}$/;
@@ -37,7 +46,6 @@ const PatientRegister = () => {
   };
 
   const validateNIC = (nic) => {
-    // Assuming Sri Lankan NIC format: 12 characters (old) or 10+2 characters (new)
     const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
     return nicRegex.test(nic.trim());
   };
@@ -53,18 +61,8 @@ const PatientRegister = () => {
   };
 
   const validatePassword = (password) => {
-    // At least 8 characters, one uppercase, one lowercase, one number
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
     return passwordRegex.test(password);
-  };
-
-  const validateDOB = (dob) => {
-    const today = new Date();
-    const birthDate = new Date(dob);
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    return age > 0 && (age > 18 || (age === 18 && monthDiff >= 0));
   };
 
   const handleChange = (e) => {
@@ -92,8 +90,8 @@ const PatientRegister = () => {
       newErrors.nic = 'Invalid NIC number';
     }
 
-    if (!validateDOB(formData.dob)) {
-      newErrors.dob = 'You must be at least 18 years old';
+    if (!formData.dob) {
+      newErrors.dob = 'Date of birth is required';
     }
 
     if (!formData.blood) {
@@ -142,18 +140,15 @@ const PatientRegister = () => {
 
     setLoading(true);
     try {
-      const response =await axios.post('http://localhost:5555/patient/register', formDataToSend, {
+      const response = await axios.post('http://localhost:5555/patient/register', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      // Store the token in localStorage
-    localStorage.setItem('patientToken', response.data.token);
-    
-    setLoading(false);
-    // Navigate to profile page with the new patient's ID
-    navigate(`/patient/view/${response.data.patient._id}`)
+      localStorage.setItem('patientToken', response.data.token);
+      setLoading(false);
+      navigate(`/patient/view/${response.data.patient._id}`);
     } catch (error) {
       setLoading(false);
       alert('An error occurred. Please check the console.');
@@ -161,14 +156,47 @@ const PatientRegister = () => {
     }
   };
 
-  // Rest of the component remains the same as the previous implementation
-  // (Navigation bar and other UI components)
-
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Navigation Bar (same as previous implementation) */}
-      <motion.header>
-        {/* ... */}
+      {/* Navigation Bar */}
+      <motion.header
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="fixed w-full bg-white shadow-sm z-50"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 flex items-center">
+                <h1 className="text-xl font-bold text-blue-600">HealthCare</h1>
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                {navItems.map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => setActiveNav(item)}
+                    className={`${
+                      activeNav === item
+                        ? 'border-blue-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none">
+                <Bell className="h-6 w-6" />
+              </button>
+              <button className="flex items-center text-sm rounded-full focus:outline-none">
+                <User className="h-8 w-8 rounded-full bg-blue-100 p-1.5 text-blue-600" />
+              </button>
+            </div>
+          </div>
+        </div>
       </motion.header>
 
       {/* Main Content */}
@@ -240,6 +268,7 @@ const PatientRegister = () => {
                         name="dob"
                         value={formData.dob}
                         onChange={handleChange}
+                        max={getTodayDate()}
                         className={`w-full px-4 py-2.5 border ${
                           errors.dob ? 'border-red-500' : 'border-gray-300'
                         } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
