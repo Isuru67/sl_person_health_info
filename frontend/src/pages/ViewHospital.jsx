@@ -5,40 +5,45 @@ import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
 import { motion } from 'framer-motion';
 
-const ViewPatientProfile = () => {
-  const [patient, setPatient] = useState({});
+const ViewHospital = () => {
+  const [hospital, setHospital] = useState({});
   const [loading, setLoading] = useState(false);
-  const { id } = useParams();
+  const { hospitalId } = useParams();
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState('Home');
+
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`http://localhost:5555/patient/${id}`)
+      .get(`http://localhost:5555/hospitaldashboard/${hospitalId}`)
       .then((response) => {
-        setPatient(response.data);
+        setHospital(response.data);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching patient:', error);
+        console.error('Error fetching hospital:', error);
         setLoading(false);
       });
-  }, [id]);
+  }, [hospitalId]);
 
-  const handleEditPatient = () => {
-    navigate(`/patient/Edit/${id}`);
+  const handleEditHospital = () => {
+    navigate(`/hospital-edit/${hospitalId}`);
   };
-  const handleDeletePatient = () => {
-    if (window.confirm('Are you sure you want to delete this patient profile?')) {
+
+  const handleDeleteHospital = () => {
+    const isConfirmed = window.confirm(
+      'Are you sure you want to delete this hospital profile? This action cannot be undone.'
+    );
+
+    if (isConfirmed) {
       axios
-        .delete(`http://localhost:5555/patient/${id}`)
+        .delete(`http://localhost:5555/hospitaldashboard/${hospitalId}`)
         .then(() => {
-          alert('Patient profile deleted successfully');
-          navigate('/');
+          alert('Hospital profile deleted successfully');
+          navigate('/admin-dashboard');
         })
         .catch((error) => {
-          console.error('Error deleting patient:', error);
-          alert('Error deleting patient profile');
+          console.error('Error deleting hospital:', error);
         });
     }
   };
@@ -73,11 +78,12 @@ const ViewPatientProfile = () => {
       boxShadow: "0 2px 5px rgba(0,0,0,0.2)"
     }
   };
+
   const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
-      {/* Fixed Navigation Bar (exact copy from home page) */}
+      {/* Fixed Navigation Bar */}
       <motion.header 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -100,7 +106,7 @@ const ViewPatientProfile = () => {
                 HealthCare HIMS
               </motion.span>
             </motion.div>
-
+            
             <nav className="hidden md:flex space-x-2">
               {navItems.map((item, i) => (
                 <motion.div
@@ -120,23 +126,14 @@ const ViewPatientProfile = () => {
                 </motion.div>
               ))}
             </nav>
-
+            
             <div className="flex items-center space-x-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="text-white font-medium hidden md:block"
               >
-                {patient.name || 'Patient Profile'}
+                {hospital.hospitalName || 'Hospital Profile'}
               </motion.div>
-              {patient.pic && (
-                <motion.img
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  src={patient.pic}
-                  alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-white cursor-pointer"
-                />
-              )}
             </div>
           </div>
         </div>
@@ -153,13 +150,14 @@ const ViewPatientProfile = () => {
         >
           <BackButton className="text-gray-700 hover:text-indigo-600" />
         </motion.div>
+
         <motion.h1 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
           className="text-4xl font-bold text-gray-800 mb-8 pl-12"
         >
-          Patient Profile Details
+          Hospital Profile Details
         </motion.h1>
 
         {loading ? (
@@ -174,39 +172,39 @@ const ViewPatientProfile = () => {
             className="bg-white rounded-xl shadow-xl overflow-hidden"
           >
             <div className="md:flex">
-              {/* Left Column - Profile Picture */}
+              {/* Left Column - Certificate Image */}
               <div className="md:w-1/3 bg-gradient-to-br from-blue-50 to-indigo-50 p-8 flex flex-col items-center">
                 <div className="relative mb-6">
-                  {patient.pic ? (
+                  {hospital.certificateImage ? (
                     <motion.img
                       whileHover={{ scale: 1.03 }}
-                      src={patient.pic}
-                      alt="Profile"
-                      className="w-48 h-48 rounded-full border-4 border-white shadow-lg object-cover"
+                      src={`http://localhost:5555/uploads/${hospital.certificateImage}`}
+                      alt="Hospital Certificate"
+                      className="w-48 h-48 rounded-lg border-4 border-white shadow-lg object-cover"
                     />
                   ) : (
-                    <div className="w-48 h-48 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center text-gray-400">
-                      <span>No Image</span>
+                    <div className="w-48 h-48 rounded-lg bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center text-gray-400">
+                      <span>No Certificate Available</span>
                     </div>
                   )}
-
                   <motion.div
                     whileHover={{ scale: 1.1 }}
                     className="absolute -bottom-3 -right-3 bg-blue-500 text-white rounded-full p-2 shadow-md cursor-pointer"
-                    onClick={handleEditPatient}
+                    onClick={handleEditHospital}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </motion.div>
                 </div>
+
                 <motion.h2 
-                  className="text-2xl font-bold text-gray-800 mb-1"
+                  className="text-2xl font-bold text-gray-800 mb-1 text-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
-                  {patient.name}
+                  {hospital.hospitalName}
                 </motion.h2>
                 <motion.p 
                   className="text-blue-600 font-medium mb-4"
@@ -214,7 +212,7 @@ const ViewPatientProfile = () => {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
-                  Patient ID: {id}
+                  Hospital ID: {hospitalId}
                 </motion.p>
 
                 <div className="flex space-x-4 mt-6">
@@ -222,7 +220,7 @@ const ViewPatientProfile = () => {
                     variants={buttonSpring}
                     whileHover="hover"
                     whileTap="tap"
-                    onClick={handleEditPatient}
+                    onClick={handleEditHospital}
                     className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-md"
                   >
                     Edit Profile
@@ -231,15 +229,15 @@ const ViewPatientProfile = () => {
                     variants={buttonSpring}
                     whileHover="hover"
                     whileTap="tap"
-                    onClick={handleDeletePatient}
+                    onClick={handleDeleteHospital}
                     className="px-6 py-2 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 text-white font-medium shadow-md"
                   >
                     Delete Profile
                   </motion.button>
                 </div>
               </div>
-              {/* Right Column - Patient Details */}
 
+              {/* Right Column - Hospital Details */}
               <div className="md:w-2/3 p-8">
                 <motion.h3 
                   className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"
@@ -247,8 +245,9 @@ const ViewPatientProfile = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  Personal Information
+                  Hospital Information
                 </motion.h3>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -256,8 +255,14 @@ const ViewPatientProfile = () => {
                     transition={{ delay: 0.5 }}
                     className="bg-gray-50 p-4 rounded-lg"
                   >
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">NIC Number</h4>
-                    <p className="text-lg font-medium text-gray-800">{patient.nic || 'Not provided'}</p>
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Email</h4>
+                    <p className="text-lg font-medium text-gray-800">
+                      {hospital.email ? (
+                        <a href={`mailto:${hospital.email}`} className="text-blue-600 hover:underline">
+                          {hospital.email}
+                        </a>
+                      ) : 'Not provided'}
+                    </p>
                   </motion.div>
 
                   <motion.div
@@ -266,26 +271,21 @@ const ViewPatientProfile = () => {
                     transition={{ delay: 0.6 }}
                     className="bg-gray-50 p-4 rounded-lg"
                   >
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Date of Birth</h4>
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Primary Contact</h4>
                     <p className="text-lg font-medium text-gray-800">
-                      {patient.dob ? new Date(patient.dob).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      }) : 'Not provided'}
+                      {hospital.mobile1 || 'Not provided'}
                     </p>
                   </motion.div>
+
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7 }}
                     className="bg-gray-50 p-4 rounded-lg"
                   >
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Blood Group</h4>
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Secondary Contact</h4>
                     <p className="text-lg font-medium text-gray-800">
-                      {patient.blood ? (
-                        <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full">{patient.blood}</span>
-                      ) : 'Not provided'}
+                      {hospital.mobile2 || 'Not provided'}
                     </p>
                   </motion.div>
 
@@ -295,41 +295,20 @@ const ViewPatientProfile = () => {
                     transition={{ delay: 0.8 }}
                     className="bg-gray-50 p-4 rounded-lg"
                   >
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Contact Number</h4>
-                    <p className="text-lg font-medium text-gray-800">{patient.tele || 'Not provided'}</p>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9 }}
-                    className="bg-gray-50 p-4 rounded-lg md:col-span-2"
-                  >
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Email Address</h4>
-                    <p className="text-lg font-medium text-gray-800 break-all">
-                      {patient.email ? (
-                        <a href={`mailto:${patient.email}`} className="text-blue-600 hover:underline">
-                          {patient.email}
-                        </a>
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Status</h4>
+                    <p className="text-lg font-medium text-gray-800">
+                      {hospital.status ? (
+                        <span className={`px-3 py-1 rounded-full ${
+                          hospital.status === 'Active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {hospital.status}
+                        </span>
                       ) : 'Not provided'}
                     </p>
                   </motion.div>
                 </div>
-
-                {/* Medical Summary Section */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                  className="mt-8"
-                >
-                  <h3 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Medical Summary</h3>
-                  <div className="bg-blue-50 p-6 rounded-lg">
-                    <p className="text-gray-700">
-                      {patient.medicalSummary || 'No medical summary available. Please consult with your healthcare provider.'}
-                    </p>
-                  </div>
-                </motion.div>
               </div>
             </div>
           </motion.div>
@@ -351,7 +330,7 @@ const ViewPatientProfile = () => {
               className="mb-4 md:mb-0"
             >
               <h3 className="text-xl font-bold">HealthCare HIMS</h3>
-              <p className="text-blue-200">Comprehensive Patient Management</p>
+              <p className="text-blue-200">Comprehensive Hospital Management</p>
             </motion.div>
             <div className="flex space-x-6">
               <motion.a 
@@ -377,7 +356,6 @@ const ViewPatientProfile = () => {
               </motion.a>
             </div>
           </div>
-
           <motion.div 
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
@@ -392,5 +370,4 @@ const ViewPatientProfile = () => {
   );
 };
 
-export default ViewPatientProfile;
-
+export default ViewHospital;
