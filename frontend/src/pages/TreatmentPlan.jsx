@@ -56,7 +56,7 @@ const TreatmentPlan = ({ formData, setFormData }) => {
 
             if (response.ok) {
                 alert("Form submitted successfully!");
-                navigate("/success-page"); // Redirect after submission
+                navigate("/h-patientdetails"); // Redirect after submission
             } else {
                 alert("Failed to submit form.");
             }
@@ -190,5 +190,7 @@ const TreatmentPlan = ({ formData, setFormData }) => {
         </div>
     );
 };
+
+                            
 
 export default TreatmentPlan;

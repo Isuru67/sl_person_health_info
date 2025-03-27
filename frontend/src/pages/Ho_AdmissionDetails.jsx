@@ -5,14 +5,10 @@ import { motion } from "framer-motion";
 import DualNavbar from "../components/layout";
 import { useParams } from "react-router-dom";
 
-
 const Ho_AdmissionDetails = ({ formData, setFormData }) => {
     const navigate = useNavigate();
     const { nic } = useParams(); // Get NIC from the URL
     console.log("NIC from URL:", nic);  // This should log the NIC value
-    //const [selectedPatient] = useState(null);
-
-
 
     const handleChange = (e) => {
         setFormData({ 
@@ -23,17 +19,15 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
             } 
         });
     };
-   const[isSubmitting,setIsSubmitting]= useState(false);
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleNext = async (e) => {
         e.preventDefault();
-        
 
-    if (isSubmitting) return;//prevent multiple submition
+        if (isSubmitting) return; // Prevent multiple submissions
 
-    setIsSubmitting(true);//mark as submitting
-
-    navigate(`/h-patientdetails/medical-history/${nic}`);
+        setIsSubmitting(true); // Mark as submitting
 
         // Prepare the data to be sent
         const treatmentData = {
@@ -43,7 +37,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                 primaryDiagnosis: formData.Ho_admissionDetails.primaryDiagnosis,
             }
         };
-    
+
         try {
             // Send data to the backend
             const response = await fetch(`http://localhost:5555/api/treatment/${nic}`, {
@@ -53,12 +47,11 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                 },
                 body: JSON.stringify(treatmentData),
             });
-    
+
             const result = await response.json();
-    
+
             if (response.ok) {
                 console.log("Treatment added successfully:", result);
-               
             } else {
                 console.error("Error adding treatment:", result.error);
             }
@@ -66,7 +59,8 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
             console.error("Error sending data to the backend:", error);
         }
 
-        setIsSubmitting(false);//re-enable button after submission
+        setIsSubmitting(false); // Re-enable button after submission
+        navigate(`/h-patientdetails/medical-history/${nic}`); // Navigate to the next page
     };
 
     return (
@@ -108,6 +102,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
                             onChange={handleChange}
                             required
+                            value={formData.Ho_admissionDetails?.admissionDate || ""}
                         />
                     </div>
 
@@ -121,6 +116,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                             placeholder="Admitting Physician"
                             onChange={handleChange}
                             required
+                            value={formData.Ho_admissionDetails?.admittingPhysician || ""}
                         />
                     </div>
 
@@ -134,6 +130,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                             placeholder="Primary Diagnosis"
                             onChange={handleChange}
                             required
+                            value={formData.Ho_admissionDetails?.primaryDiagnosis || ""}
                         />
                     </div>
 

@@ -45,7 +45,43 @@ router.get('/treatment/:nic', async (req, res) => {
     }
 });
 
+router.put('/treatment/:nic', async (req, res) => {
+    const { nic } = req.params;  // Get NIC from the request params
+    const treatmentData = req.body;  // Get the treatment data from the request body
 
+    try {
+        // Find the treatment record by NIC and update it
+        const updatedTreatment = await Treatment.findOneAndUpdate(
+            { patient_nic: nic },
+            treatmentData,  // The full data to be updated
+            { new: true }    // Return the updated document
+        );
+
+        if (!updatedTreatment) {
+            return res.status(404).send("Treatment record not found");
+        }
+
+        // Respond with the updated treatment record
+        res.status(200).json(updatedTreatment);
+    } catch (error) {
+        console.error("Error updating treatment:", error);
+        res.status(500).send("Server error");
+    }
+});
+
+// Use patient NIC in the route
+router.delete('/treatments/:nic', async (req, res) => {
+    try {
+        const deletedTreatment = await Treatment.findOneAndDelete({ patient_nic: req.params.nic });
+        if (!deletedTreatment) {
+            return res.status(404).json({ message: 'Treatment not found for this NIC' });
+        }
+        res.json({ message: 'Treatment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting treatment:', error);
+        res.status(500).json({ message: 'Error deleting treatment' });
+    }
+});
 router.put("/treatment/:nic", async (req, res) => {
     try {
         const updatedTreatment = await Treatment.findOneAndUpdate(
@@ -66,5 +102,6 @@ router.put("/treatment/:nic", async (req, res) => {
 });
 
 router.delete("/:patientId/treatment/:treatmentId", deleteTreatment); // Delete treatment
+
 
 export default router;
