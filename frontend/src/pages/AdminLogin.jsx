@@ -20,6 +20,8 @@ const AdminLogin = () => {
         role: role
       });
 
+      
+
       // Store jwt token values
       localStorage.setItem('token', response.data.token);
       
@@ -29,7 +31,7 @@ const AdminLogin = () => {
       } else if (role === 'hospitalAdmin') {
         navigate('/home');
       } else if (role === 'admin') {
-        navigate('/admin');
+        navigate('/admin-dashboard');
       }
     // eslint-disable-next-line no-unused-vars
     } catch (error) {
