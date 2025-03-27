@@ -14,7 +14,6 @@ const EditPatientProfile = () => {
     tele: '',
     email: '',
     username: '',
-    //password: '',
     pic: ''
   });
   const [loading, setLoading] = useState(false);
@@ -26,7 +25,12 @@ const EditPatientProfile = () => {
     setLoading(true);
     axios.get(`http://localhost:5555/patient/${id}`)
       .then((response) => {
-        setPatient(response.data);
+        const patientData = response.data;
+        // Format the date properly
+        if (patientData.dob) {
+          patientData.dob = new Date(patientData.dob).toISOString().split('T')[0]; // Extract YYYY-MM-DD
+        }
+        setPatient(patientData);
         setLoading(false);
       })
       .catch((error) => {
@@ -285,19 +289,6 @@ const EditPatientProfile = () => {
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                   />
                 </div>
-
-                {/*
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={patient.password}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                  />
-                </div>
-                */}
 
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
