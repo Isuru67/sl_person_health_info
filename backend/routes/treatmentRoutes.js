@@ -1,5 +1,5 @@
 import express, { request, response } from "express";
-import { addTreatment, updateTreatment, deleteTreatment } from "../controllers/treatmentController.js";
+import { addTreatment } from "../controllers/treatmentController.js";
 import { Patient } from "../models/patientModel.js";
 import { Treatment } from "../models/hospitalModel.js";
 
@@ -82,26 +82,16 @@ router.delete('/treatments/:nic', async (req, res) => {
         res.status(500).json({ message: 'Error deleting treatment' });
     }
 });
-router.put("/treatment/:nic", async (req, res) => {
+
+// Example for fetching all treatment records from your backend
+router.get(`/treatments/all`, async (req, res) => {
     try {
-        const updatedTreatment = await Treatment.findOneAndUpdate(
-            { patient_nic: req.params.nic },
-            req.body,
-            { new: true }
-        );
-
-        if (!updatedTreatment) {
-            return res.status(404).json({ message: "Treatment not found" });
-        }
-
-        res.json(updatedTreatment);
-    } catch (error) {
-        console.error("Error updating treatment:", error);
-        res.status(500).json({ message: "Server error" });
+        const treatments = await Treatment.find(); // Assume `Treatment` is your treatment model
+        res.json({ data: treatments });
+    } catch (err) {
+        res.status(500).send("Error fetching treatment data");
     }
 });
 
-router.delete("/:patientId/treatment/:treatmentId", deleteTreatment); // Delete treatment
 
-
-export default router;
+export default router;

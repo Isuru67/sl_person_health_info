@@ -123,6 +123,7 @@ const UpdateTreatment = () => {
                         <input type="text" name="medicalHistory.allergies" value={formData.medicalHistory.allergies} onChange={handleChange} placeholder="Allergies" className="w-full p-2 border border-gray-300 mb-4" />
                         <input type="text" name="medicalHistory.illnesses" value={formData.medicalHistory.illnesses} onChange={handleChange} placeholder="Illnesses" className="w-full p-2 border border-gray-300 mb-4" />
                         <input type="text" name="medicalHistory.medications" value={formData.medicalHistory.medications} onChange={handleChange} placeholder="Medications" className="w-full p-2 border border-gray-300 mb-4" />
+                        <input type="text" name="medicalHistory.surgeries" value={formData.medicalHistory.surgeries} onChange={handleChange} placeholder="Surgeries" className="w-full p-2 border border-gray-300 mb-4" />
                         <input type="file" name="su_imaging" multiple onChange={handleChange} className="w-full p-2 border border-gray-300 mb-4" />
                         {formData.medicalHistory.su_imaging.map((file, index) => (
                                 <img 

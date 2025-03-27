@@ -16,6 +16,7 @@ import ViewTreatment from './pages/ViewTreatment'
 import UpdateTreatment  from './pages/UpdateTreatment'
 import Innovate from './pages/Innovate';
 import HospitalRegister from './pages/HospitalRegister'
+import TreatmentReportPage from './pages/TreatmentReportPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ViewHospital from './pages/ViewHospital'
 import EditHospital from './pages/EditHospital'
@@ -69,6 +70,7 @@ const App = () => {
         <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
          <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
          <Route path='/h-patientdetails/update/:nic' element={<UpdateTreatment  />} />
+         <Route path='/traetmentreort' element={<TreatmentReportPage  />} />
          <Route path='/innov' element={<Innovate/>} />
          <Route path='/hospital-register' element={<HospitalRegister/>} />
          <Route path='/hospital-view/:hospitalId' element={<ViewHospital/>} />
