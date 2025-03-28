@@ -7,7 +7,11 @@ import patientRoutes from './routes/patientRoutes.js';
 import cors from "cors";
 import innovRoutes from './routes/innovRoutes.js';
 import treatmentRoutes from './routes/treatmentRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 //defines an instance of the Express framework and assigns it to the variable
 const app = express();
 
@@ -29,6 +33,8 @@ app.use('/hospitaldashboard', hospitalRoutes);
 app.use('/patient', patientRoutes);
 app.use('/ino', innovRoutes);
 app.use('/api', treatmentRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 mongoose
 .connect(mongoDBURL)
