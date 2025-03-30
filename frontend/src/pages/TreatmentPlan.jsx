@@ -37,14 +37,13 @@ const TreatmentPlan = ({ formData, setFormData }) => {
     // **Submit the entire form data to the database**
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-           // Ensure NIC is included in the request data
-        const updatedFormData = {
+
+         // Construct the updatedFormData
+    const updatedFormData = {
         ...formData,
         nic,  // Add NIC to associate with the patient
     };
-
-
+        
         try {
             const response = await fetch(`http://localhost:5555/api/treatment/${nic}`, {
                 method: "POST",
@@ -53,7 +52,7 @@ const TreatmentPlan = ({ formData, setFormData }) => {
                 },
                 body: JSON.stringify(updatedFormData), // send full form data
             });
-
+    
             if (response.ok) {
                 alert("Form submitted successfully!");
                 navigate("/h-patientdetails"); // Redirect after submission
@@ -65,7 +64,6 @@ const TreatmentPlan = ({ formData, setFormData }) => {
             alert("An error occurred. Please try again.");
         }
     };
-
     return (
         <div className="flex flex-col h-screen bg-gray-100">
             {/* Top Navigation Bar */}

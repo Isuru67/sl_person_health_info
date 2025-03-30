@@ -35,11 +35,11 @@ router.post('/treatment/:nic',addTreatment, async (request, response) => {
 });
 router.get('/treatment/:nic', async (req, res) => {
     try {
-        const treatment = await Treatment.findOne({ patient_nic: req.params.nic });
-        if (!treatment) {
+        const treatments = await Treatment.find({ patient_nic: req.params.nic });
+        if (treatments.length === 0) {
             return res.status(404).json({ error: "Treatment not found" });
         }
-        res.json(treatment);
+        res.json(treatments);
     } catch (error) {
         res.status(500).json({ error: "Server error" });
     }

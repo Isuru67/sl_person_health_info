@@ -1,71 +1,69 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React ,{useState} from "react";
+import { useNavigate, useParams } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import DualNavbar from "../components/layout";
-import { useParams } from "react-router-dom";
 
 const Ho_AdmissionDetails = ({ formData, setFormData }) => {
     const navigate = useNavigate();
     const { nic } = useParams(); // Get NIC from the URL
-    console.log("NIC from URL:", nic);  // This should log the NIC value
+    console.log("NIC from URL:", nic); // Debugging purpose
+    const [error, setError] = useState(""); // State to store error messages
 
     const handleChange = (e) => {
-        setFormData({ 
-            ...formData, 
-            Ho_admissionDetails: { 
-                ...formData.Ho_admissionDetails, 
-                [e.target.name]: e.target.value 
-            } 
-        });
-    };
+        const { name, value } = e.target;
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
+        if (name === "admissionDate") {
+            const selectedDate = new Date(value);
+            const today = new Date();
+             // Remove time part for accurate comparison
+
+            if (selectedDate > today) {
+                setError("Admission date cannot be in the future.");
+                return;
+            } else {
+                setError(""); // Clear error if date is valid
+            }
+        }
+
+        setFormData((prevData) => ({
+            ...prevData,
+            ho_admissionDetails: {
+                ...prevData.ho_admissionDetails,
+                [name]: name === "admittingPhysician" || name === "primaryDiagnosis"
+                    ? [value] // Store as an array
+                    : value,
+            },
+        }));
+    };
 
     const handleNext = async (e) => {
         e.preventDefault();
 
-        if (isSubmitting) return; // Prevent multiple submissions
-
-        setIsSubmitting(true); // Mark as submitting
-
-        // Prepare the data to be sent
-        const treatmentData = {
-            ho_admissionDetails: {
-                admissionDate: formData.Ho_admissionDetails.admissionDate,
-                admittingPhysician: formData.Ho_admissionDetails.admittingPhysician,
-                primaryDiagnosis: formData.Ho_admissionDetails.primaryDiagnosis,
-            }
-        };
-
         try {
-            // Send data to the backend
-            const response = await fetch(`http://localhost:5555/api/treatment/${nic}`, {
-                method: "POST",
+            const response = await fetch(`http://localhost:5555/patient/${nic}`, {
+                method: "PUT", // Use PUT for updating patient details
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(treatmentData),
+                body: JSON.stringify({
+                    ho_admissionDetails: formData.ho_admissionDetails,
+                }),
             });
 
             const result = await response.json();
+            console.log("Updated successfully:", result);
 
-            if (response.ok) {
-                console.log("Treatment added successfully:", result);
-            } else {
-                console.error("Error adding treatment:", result.error);
-            }
+            
+                navigate(`/h-patientdetails/medical-history/${nic}`);
+            
         } catch (error) {
-            console.error("Error sending data to the backend:", error);
+            console.error("Failed to update data:", error);
         }
-
-        setIsSubmitting(false); // Re-enable button after submission
-        navigate(`/h-patientdetails/medical-history/${nic}`); // Navigate to the next page
     };
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
-            {/* Top Navigation Bar */}
             <DualNavbar />
 
             <motion.section 
@@ -76,7 +74,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                 className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6"
             >
                 <motion.form 
-                    onSubmit={handleNext} 
+                    onSubmit={handleNext}
                     initial={{ scale: 0.9, rotate: -2 }}
                     whileInView={{ scale: 1, rotate: 0 }}
                     viewport={{ once: true }}
@@ -102,8 +100,9 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
                             onChange={handleChange}
                             required
-                            value={formData.Ho_admissionDetails?.admissionDate || ""}
+                            value={formData.ho_admissionDetails?.admissionDate || ""}
                         />
+                         {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -116,7 +115,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                             placeholder="Admitting Physician"
                             onChange={handleChange}
                             required
-                            value={formData.Ho_admissionDetails?.admittingPhysician || ""}
+                            value={formData.ho_admissionDetails?.admittingPhysician?.[0] || ""}
                         />
                     </div>
 
@@ -130,7 +129,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                             placeholder="Primary Diagnosis"
                             onChange={handleChange}
                             required
-                            value={formData.Ho_admissionDetails?.primaryDiagnosis || ""}
+                            value={formData.ho_admissionDetails?.primaryDiagnosis?.[0] || ""}
                         />
                     </div>
 

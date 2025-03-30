@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 
 const patient_hSchema = new Schema({
     ho_admissionDetails: {
-        admissionDate: [String],
+        admissionDate: Date,
         admittingPhysician: [String],
         primaryDiagnosis: [String],
     },
