@@ -4,7 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
 
 const UpdateTreatment = () => {
-    const { nic } = useParams(); // Get NIC from URL
+    const { nic ,treatmentId} = useParams(); // Get NIC from URL
+    console.log(" NIC:", nic, "Treatment ID:", treatmentId);
     const navigate = useNavigate();
 
     // State to manage form data
@@ -37,12 +38,17 @@ const UpdateTreatment = () => {
     useEffect(() => {
         axios.get(`http://localhost:5555/api/treatment/${nic}`)
             .then((res) => {
-                console.log("API Response:", res.data); // Debugging
-                if (res.data && res.data.ho_admissionDetails) {
-                    setFormData(res.data);
+                console.log("Fetched Treatments:", res.data);
+    
+                // Find the specific treatment by ID
+                const selectedTreatment = res.data.find(treatment => treatment._id === treatmentId);
+    
+                if (selectedTreatment) {
+                    setFormData(selectedTreatment);
                 } else {
-                    console.error("Invalid or empty response.");
-                    alert("No treatment data available.");
+                    console.error("Treatment not found.");
+                    alert("Treatment record not found.");
+                    navigate(`/h-patientdetails/view/${nic}`); // Redirect if not found
                 }
             })
             .catch((error) => {
@@ -52,7 +58,7 @@ const UpdateTreatment = () => {
             .finally(() => {
                 setLoading(false);
             });
-    }, [nic]);
+    }, [nic, treatmentId,navigate]);
     
 
 
@@ -86,17 +92,21 @@ const UpdateTreatment = () => {
         e.preventDefault();
     
         try {
-            await axios.put(`http://localhost:5555/api/treatment/${nic}`, formData, {
-                headers: { "Content-Type": "application/json" }
-            });
+            const response = await axios.put(
+                `http://localhost:5555/api/treatment/${nic}/${treatmentId}`, 
+                formData,
+                { headers: { "Content-Type": "application/json" } }
+            );
     
+            console.log("✅ API Response:", response.data);
             alert("Treatment updated successfully.");
             navigate(`/h-patientdetails/view/${nic}`);
         } catch (error) {
-            console.error("Error updating treatment:", error);
-            alert("Error updating treatment.");
+            console.error("❌ Error updating treatment:", error.response?.data || error.message);
+            alert(`Error updating treatment: ${error.response?.data?.message || error.message}`);
         }
     };
+    
     
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
