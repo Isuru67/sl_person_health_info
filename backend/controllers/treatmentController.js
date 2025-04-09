@@ -42,24 +42,36 @@ export const addTreatment = async (request, response) => {
 // 🔹 Update Treatment for a Patient (Find by NIC)
 export const updateTreatment = async (req, res) => {
     try {
+        console.log("🟢 Request received with params:", req.params);
+        console.log("🟢 Request body:", req.body);
+
         const { nic, treatmentId } = req.params;
         const { description, date } = req.body;
 
-        const patient = await Patient.findOne({ nic });
-        if (!patient) return res.status(404).json({ message: "Patient not found" });
+        const patient = await Patient.findOne({ nic:nic });
+        if (!patient) {
+            console.error("❌ Patient not found");
+            return res.status(404).json({ message: "Patient not found" });
+        }
 
         const treatment = patient.treatments.id(treatmentId);
-        if (!treatment) return res.status(404).json({ message: "Treatment not found" });
+        if (!treatment) {
+            console.error("❌ Treatment not found");
+            return res.status(404).json({ message: "Treatment not found" });
+        }
 
         treatment.description = description || treatment.description;
         treatment.date = date || treatment.date;
         await patient.save();
 
-        res.status(200).json({ message: "Treatment updated", treatments: patient.treatments });
+        console.log("✅ Treatment updated successfully:", treatment);
+        res.status(200).json({ message: "Treatment updated", treatment });
     } catch (error) {
+        console.error("❌ Server error:", error.message);
         res.status(500).json({ message: "Error updating treatment", error: error.message });
     }
 };
+
 
 // 🔹 Delete Treatment for a Patient (Find by NIC)
 export const deleteTreatment = async (req, res) => {

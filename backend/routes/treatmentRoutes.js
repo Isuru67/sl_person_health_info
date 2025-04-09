@@ -45,29 +45,37 @@ router.get('/treatment/:nic', async (req, res) => {
     }
 });
 
-router.put('/treatment/:nic', async (req, res) => {
-    const { nic } = req.params;  // Get NIC from the request params
-    const treatmentData = req.body;  // Get the treatment data from the request body
+router.put('/treatment/:nic/:treatmentId', async (req, res) => {
+    const { nic, treatmentId } = req.params;
+    console.log("Received NIC:", nic, "Received Treatment ID:", treatmentId);
 
     try {
-        // Find the treatment record by NIC and update it
-        const updatedTreatment = await Treatment.findOneAndUpdate(
-            { patient_nic: nic },
-            treatmentData,  // The full data to be updated
-            { new: true }    // Return the updated document
-        );
-
-        if (!updatedTreatment) {
-            return res.status(404).send("Treatment record not found");
+        // Find patient by NIC
+        const patient = await Patient.findOne({ patient_nic: nic });
+        if (!patient) {
+            console.log("❌ Patient not found.");
+            return res.status(404).json({ message: "Patient not found" });
         }
 
-        // Respond with the updated treatment record
-        res.status(200).json(updatedTreatment);
+        // Find treatment within the patient
+        const treatment = patient.treatments.id(treatmentId);
+        if (!treatment) {
+            console.log("❌ Treatment not found.");
+            return res.status(404).json({ message: "Treatment not found" });
+        }
+
+        // Update treatment details
+        Object.assign(treatment, req.body);
+        await patient.save();
+
+        res.status(200).json({ message: "Treatment updated successfully", treatment });
     } catch (error) {
-        console.error("Error updating treatment:", error);
-        res.status(500).send("Server error");
+        console.error("❌ Error updating treatment:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
+
+
 
 // Use patient NIC in the route
 router.delete('/treatments/:nic', async (req, res) => {
