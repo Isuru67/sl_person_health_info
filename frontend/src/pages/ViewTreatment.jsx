@@ -124,7 +124,7 @@ const ViewTreatment = () => {
                             </table>
                             <div className="flex space-x-2">
                             <button
-                                    onClick={() => navigate(`/h-patientdetails/update/${nic}`)}
+                                    onClick={() => navigate(`/h-patientdetails/update/${nic}/${treatment._id}`)}
                                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mt-4"
                                 >
                                     Update Treatment
