@@ -132,7 +132,7 @@ const ViewPatientProfile = () => {
                 <motion.img
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  src={patient.pic}
+                  src={`http://localhost:5555/uploads/${patient.pic}`}
                   alt="Profile"
                   className="w-10 h-10 rounded-full border-2 border-white cursor-pointer"
                 />
@@ -180,7 +180,7 @@ const ViewPatientProfile = () => {
                   {patient.pic ? (
                     <motion.img
                       whileHover={{ scale: 1.03 }}
-                      src={patient.pic}
+                      src={`http://localhost:5555/uploads/${patient.pic}`}
                       alt="Profile"
                       className="w-48 h-48 rounded-full border-4 border-white shadow-lg object-cover"
                     />

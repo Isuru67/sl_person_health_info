@@ -95,10 +95,10 @@ router.get("/:id", async (request, response) => {
 });
 
 // Update Patient Route
-router.put("/:id", async (request, response) => {
+router.put("/:id", upload.single('pic'), async (request, response) => {
   try {
     const { id } = request.params;
-
+    
     // Check if patient exists
     const patient = await Patient.findById(id);
     if (!patient) {
@@ -106,14 +106,24 @@ router.put("/:id", async (request, response) => {
     }
 
     const { name, nic, tele, email, password } = request.body;
+    const updateData = { name, nic, tele, email };
+
+    // Handle new image upload if provided
+    if (request.file) {
+      updateData.pic = request.file.filename;
+    }
 
     // Hash new password if provided
     if (password) {
       const salt = await bcrypt.genSalt(10);
-      request.body.password = await bcrypt.hash(password, salt);
+      updateData.password = await bcrypt.hash(password, salt);
     }
 
-    const updatedPatient = await Patient.findByIdAndUpdate(id, request.body, { new: true });
+    const updatedPatient = await Patient.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true }
+    );
 
     return response.status(200).json({
       message: "Patient updated successfully",
