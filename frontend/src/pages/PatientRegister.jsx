@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
 import axios from 'axios';
@@ -25,10 +25,21 @@ const PatientRegister = () => {
 
   const [errors, setErrors] = useState({});
   const [pic, setProfilePicture] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeNav, setActiveNav] = useState('Register');
 
   const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
+
+  // Cleanup preview URL when component unmounts or when new image is selected
+  useEffect(() => {
+    // Cleanup function to revoke object URL
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Get today's date in YYYY-MM-DD format for date input max attribute
   const getTodayDate = () => {
@@ -75,7 +86,17 @@ const PatientRegister = () => {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setProfilePicture(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      
+      // Cleanup old preview URL if it exists
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
+      // Create a new preview URL
+      const objectUrl = URL.createObjectURL(selectedFile);
+      setPreviewUrl(objectUrl);
+      setProfilePicture(selectedFile);
     }
   };
   
@@ -417,21 +438,29 @@ const PatientRegister = () => {
                           htmlFor="file-upload"
                           className="cursor-pointer flex flex-col items-center justify-center"
                         >
-                          <svg
-                            className="w-12 h-12 text-gray-400 mb-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          {previewUrl ? (
+                            <img 
+                              src={previewUrl} 
+                              alt="Profile preview" 
+                              className="w-32 h-32 object-cover rounded-full mb-2" 
                             />
-                          </svg>
+                          ) : (
+                            <svg
+                              className="w-12 h-12 text-gray-400 mb-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                              />
+                            </svg>
+                          )}
                           <span className="text-sm text-gray-600">
-                            {pic ? pic.name : 'Click to upload profile picture'}
+                            {pic ? 'Change profile picture' : 'Click to upload profile picture'}
                           </span>
                         </label>
                       </div>
