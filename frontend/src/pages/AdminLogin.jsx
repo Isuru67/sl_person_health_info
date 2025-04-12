@@ -14,20 +14,38 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5555/admin/login', {
-        username: username,
-        password: password,
-        role: role
-      });
-
+      let response;
       
+      // Use different endpoints based on role
+      if (role === 'user') {
+        response = await axios.post('http://localhost:5555/patient/login', {
+          username: username,
+          password: password
+        });
+      } else {
+        // For admin and hospitalAdmin roles
+        response = await axios.post('http://localhost:5555/admin/login', {
+          username: username,
+          password: password,
+          role: role
+        });
+      }
 
       // Store jwt token values
       localStorage.setItem('token', response.data.token);
       
+      // Store user information for future reference
+      if (response.data.user) {
+        localStorage.setItem('userInfo', JSON.stringify(response.data.user));
+      }
+      
       // Navigate based on the selected role
       if (role === 'user') {
-        navigate('/user');
+        if (response.data.user && response.data.user._id) {
+          navigate(`/patient/view/${response.data.user._id}`); // Navigate to the specific patient profile page
+        } else {
+          navigate('/user'); // Fallback to generic user route if no ID found
+        }
       } else if (role === 'hospitalAdmin') {
         navigate('/home');
       } else if (role === 'admin') {
