@@ -44,7 +44,8 @@ router.post('/register', upload.single('pic'), async (req, response) => {
       email,
       username,
       password: hashedPassword,
-      pic:imageName
+      pic: imageName,
+      role: "user"  // Explicitly set role to "user"
     });
 
     await newPatient.save();
@@ -60,6 +61,42 @@ router.post('/register', upload.single('pic'), async (req, response) => {
   } catch (error) {
     console.error("Error during patient registration:", error);
     return response.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
+});
+
+// Patient Login Route
+router.post('/login', async (request, response) => {
+  const { username, password } = request.body;
+
+  try {
+    // Find patient by username
+    const user = await Patient.findOne({ username });
+    
+    // Check if user exists and password matches
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return response.status(401).json({ message: 'Invalid username or password' });
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+    // Return token and user info (excluding password)
+    const userInfo = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      nic: user.nic,
+      role: user.role,
+      pic: user.pic
+    };
+    
+    response.status(200).json({ 
+      token,
+      user: userInfo 
+    });
+  } catch (error) {
+    console.error('Error during patient login:', error);
+    response.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
