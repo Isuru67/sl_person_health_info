@@ -17,6 +17,8 @@ const EditPatientProfile = () => {
     pic: ''
   });
   const [loading, setLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [newImageFile, setNewImageFile] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState('Home');
@@ -47,15 +49,39 @@ const EditPatientProfile = () => {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      const fileName = e.target.files[0].name;
-      setPatient(prev => ({ ...prev, pic: fileName }));
+      const file = e.target.files[0];
+      setNewImageFile(file);
+      
+      // Create a preview URL for the selected image
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewImage(objectUrl);
     }
   };
 
   const handleEditPatient = () => {
     setLoading(true);
+    
+    // Create FormData object to handle file uploads
+    const formData = new FormData();
+    formData.append('name', patient.name);
+    formData.append('nic', patient.nic);
+    formData.append('dob', patient.dob);
+    formData.append('blood', patient.blood);
+    formData.append('tele', patient.tele);
+    formData.append('email', patient.email);
+    formData.append('username', patient.username);
+    
+    // Only append the file if a new one was selected
+    if (newImageFile) {
+      formData.append('pic', newImageFile);
+    }
+
     axios
-      .put(`http://localhost:5555/patient/${id}`, patient)
+      .put(`http://localhost:5555/patient/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
       .then(() => {
         setLoading(false);
         navigate(`/patient/view/${id}`);
@@ -157,9 +183,9 @@ const EditPatientProfile = () => {
                 <motion.img
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  src={patient.pic}
+                  src={`http://localhost:5555/uploads/${patient.pic}`}
                   alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-white cursor-pointer"
+                  className="w-10 h-10 rounded-full border-2 border-white cursor-pointer object-cover"
                 />
               )}
             </div>
@@ -292,19 +318,43 @@ const EditPatientProfile = () => {
 
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
-                  <div className="flex items-center">
-                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg border border-gray-300 transition">
-                      Choose File
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                    </label>
-                    {patient.pic && (
-                      <span className="ml-3 text-sm text-gray-600">{patient.pic}</span>
+                  <div className="flex flex-col space-y-4">
+                    {/* Current profile image */}
+                    {patient.pic && !previewImage && (
+                      <div className="flex items-center space-x-4">
+                        <img 
+                          src={`http://localhost:5555/uploads/${patient.pic}`} 
+                          alt="Current profile" 
+                          className="w-20 h-20 rounded-lg object-cover border border-gray-300"
+                        />
+                        <span className="text-sm text-gray-600">Current: {patient.pic}</span>
+                      </div>
                     )}
+                    
+                    {/* New image preview */}
+                    {previewImage && (
+                      <div className="flex items-center space-x-4">
+                        <img 
+                          src={previewImage} 
+                          alt="New profile preview" 
+                          className="w-20 h-20 rounded-lg object-cover border border-gray-300"
+                        />
+                        <span className="text-sm text-gray-600">New image selected</span>
+                      </div>
+                    )}
+                    
+                    {/* File input */}
+                    <div className="flex items-center mt-2">
+                      <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg border border-gray-300 transition">
+                        Choose New File
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
