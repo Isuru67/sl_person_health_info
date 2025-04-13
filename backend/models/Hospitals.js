@@ -35,6 +35,11 @@ const hospitalSchema = mongoose.Schema(
             enum: ['pending', 'approved', 'rejected'],
             default: 'pending'
           },
+          role: {
+            type: String,
+            default: "hospital",
+        },
+          
     },
     {
         timestamps: true,
