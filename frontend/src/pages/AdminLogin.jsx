@@ -22,12 +22,18 @@ const AdminLogin = () => {
           username: username,
           password: password
         });
-      } else {
-        // For admin and hospitalAdmin roles
+      } else if (role === 'admin') {
+        // For admin roles
         response = await axios.post('http://localhost:5555/admin/login', {
           username: username,
           password: password,
           role: role
+        });
+      } else if (role === 'hospital') {
+        // For hospital admin roles - note: using email instead of username
+        response = await axios.post('http://localhost:5555/hospitaldashboard/login', {
+          email: username, // Using username field for email input
+          password: password
         });
       }
 
@@ -46,13 +52,14 @@ const AdminLogin = () => {
         } else {
           navigate('/user'); // Fallback to generic user route if no ID found
         }
-      } else if (role === 'hospitalAdmin') {
-        navigate('/home');
+      } else if (role === 'hospital') {
+        navigate('/hospitaldashboard'); // Make sure this route exists in your app
       } else if (role === 'admin') {
         navigate('/admin-dashboard');
       }
     // eslint-disable-next-line no-unused-vars
     } catch (error) {
+      console.error('Login error:', error.response?.data || error.message);
       setError('Invalid username or password');
     }
   };
@@ -61,12 +68,14 @@ const AdminLogin = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
         <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">Login</h2>
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>} {/* Show error message */}
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600">Username</label>
+            <label className="block text-sm font-medium text-gray-600">
+              {role === 'hospital' ? 'Email' : 'Username'}
+            </label>
             <input
-              type="text"
+              type={role === 'hospital' ? 'email' : 'text'}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -92,7 +101,7 @@ const AdminLogin = () => {
               className="w-full mt-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
               <option value="user">User</option>
-              <option value="hospitalAdmin">Hospital Admin</option>
+              <option value="hospital">Hospital Admin</option>
               <option value="admin">Admin</option>
             </select>
           </div>

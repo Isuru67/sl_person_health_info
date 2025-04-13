@@ -65,7 +65,8 @@ router.post('/hospital/register', upload.single('image'), async (req, res) => {
       mobile2,
       password: await bcrypt.hash(password, 10),
       certificateImage: imageName,
-      status: 'pending'
+      status: 'pending',
+      role: "hospital"
     });
 
     await newHospital.save();
@@ -93,6 +94,43 @@ router.post('/hospital/register', upload.single('image'), async (req, res) => {
     });
   }
 });
+
+// Hospital Login Route
+router.post('/login', async (request, response) => {
+  const { email, password } = request.body;
+
+  try {
+    // Find hospital by email
+    const hospital = await Hospital.findOne({ email });
+    
+    // Check if hospital exists and password matches
+    if (!hospital || !(await bcrypt.compare(password, hospital.password))) {
+      return response.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign({ userId: hospital._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+    // Return token and hospital info (excluding password)
+    const hospitalInfo = {
+      _id: hospital._id,
+      hospitalId: hospital.hospitalId,
+      hospitalName: hospital.hospitalName,
+      email: hospital.email,
+      status: hospital.status,
+      role: hospital.role
+    };
+    
+    response.status(200).json({ 
+      token,
+      user: hospitalInfo 
+    });
+  } catch (error) {
+    console.error('Error during hospital login:', error);
+    response.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Get all hospitals
 // Get all hospitals with selected fields
 router.get('/hospitals', async (req, res) => {
@@ -103,8 +141,6 @@ router.get('/hospitals', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
-
 
 router.get("/:hospitalId", async (request, response) => {
   try {
@@ -149,9 +185,6 @@ router.put("/:hospitalId", async (request, response) => {
     return response.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
-
-
-
 
 router.get('/hospital/certificate/:id', async (req, res) => {
   const hospital = await Hospital.findById(req.params.id);
