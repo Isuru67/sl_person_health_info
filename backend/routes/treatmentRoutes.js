@@ -47,33 +47,32 @@ router.get('/treatment/:nic', async (req, res) => {
 
 router.put('/treatment/:nic/:treatmentId', async (req, res) => {
     const { nic, treatmentId } = req.params;
-    console.log("Received NIC:", nic, "Received Treatment ID:", treatmentId);
+    console.log(`🛬 Received Update Request | NIC: ${nic} | Treatment ID: ${treatmentId}`);
 
     try {
-        // Find patient by NIC
-        const patient = await Patient.findOne({ patient_nic: nic });
-        if (!patient) {
-            console.log("❌ Patient not found.");
-            return res.status(404).json({ message: "Patient not found" });
-        }
+        // 1. Find the treatment by treatmentId and NIC
+        const treatment = await Treatment.findOne({ _id: treatmentId, patient_nic: nic });
 
-        // Find treatment within the patient
-        const treatment = patient.treatments.id(treatmentId);
         if (!treatment) {
-            console.log("❌ Treatment not found.");
+            console.log("❌ Treatment not found for Treatment ID and NIC:", treatmentId, nic);
             return res.status(404).json({ message: "Treatment not found" });
         }
 
-        // Update treatment details
+        // 2. Update treatment fields with request body
         Object.assign(treatment, req.body);
-        await patient.save();
 
-        res.status(200).json({ message: "Treatment updated successfully", treatment });
+        // 3. Save the updated treatment
+        await treatment.save();
+
+        console.log("✅ Treatment updated successfully.");
+        return res.status(200).json({ message: "Treatment updated successfully", treatment });
     } catch (error) {
         console.error("❌ Error updating treatment:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 });
+
+
 
 
 
