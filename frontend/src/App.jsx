@@ -76,18 +76,6 @@ const App = () => {
          <Route path='/hospital-view/:hospitalId' element={<ViewHospital/>} />
          <Route path='/admin-dashboard' element={<AdminDashboard/>} />
          <Route path='/hospital-edit/:hospitalId' element={<EditHospital/>} /> 
-        {/*
-        <Route path='' element={} />
-        <Route path='' element={} />
-        <Route path='' element={} />
-        <Route path='' element={} />
-        <Route path='' element={} />
-        <Route path='' element={} />
-        <Route path='' element={} />
-        <Route path='' element={} />
-        <Route path='' element={} />
-
-        */}
     </Routes>
   )
 }
