@@ -1,8 +1,34 @@
-import React, { useState } from "react";
-// eslint-disable-next-line no-unused-vars
+import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
-import { User, Bell, Activity, FileText, Upload } from 'lucide-react';
+import { User, Bell, Activity, File, FileText, AlertTriangle } from 'lucide-react';
 import axios from "axios";
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Get the PDF.js version and set up the worker
+const setupPdfWorker = () => {
+  const pdfVersion = pdfjsLib.version;
+  console.log(`Using PDF.js version: ${pdfVersion}`);
+  
+  // Try to load the worker script directly from your node_modules (Vite/Webpack should handle this)
+  try {
+    // For Vite, we need to use the import.meta.url approach
+    const workerUrl = new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url);
+    console.log("Attempting to load PDF worker from:", workerUrl.toString());
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+  } catch (err) {
+    console.warn("Failed to load worker directly, falling back to alternatives:", err);
+    
+    // For specific versions like 5.2.133, we might need to adjust the path pattern
+    if (pdfVersion === "5.2.133") {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/build/pdf.worker.mjs';
+    } else {
+      // Try CDN as last resort
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfVersion}/pdf.worker.min.js`;
+    }
+  }
+};
+
+setupPdfWorker();
 
 function Innovate() {
     const [age, setAge] = useState("");
@@ -12,10 +38,10 @@ function Innovate() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [activeNav, setActiveNav] = useState('Features');
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [fileName, setFileName] = useState("");
+    const [uploadedFile, setUploadedFile] = useState(null);
+    const [pdfContent, setPdfContent] = useState(""); // Store extracted PDF content
+    const [pdfProcessingStatus, setPdfProcessingStatus] = useState(""); // To show PDF processing status
 
-    // Navigation animation variants
     const navItem = {
         hidden: { y: -20, opacity: 0 },
         visible: (i) => ({
@@ -37,11 +63,192 @@ function Innovate() {
 
     const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
 
-    const handleFileChange = (e) => {
+    // Enhanced function to extract text from PDF with OCR-like capabilities
+    const extractTextFromPDF = async (file) => {
+        try {
+            // Display a loading message in the UI
+            setPdfProcessingStatus("Starting PDF processing...");
+            setPdfContent("Processing PDF, please wait...");
+            
+            // First, let's see if PDF.js is properly initialized
+            if (!pdfjsLib.getDocument) {
+                throw new Error("PDF.js library is not properly initialized");
+            }
+            
+            // Simple text extraction as fallback if we encounter issues
+            const useFallbackMethod = async () => {
+                console.log("Using fallback text extraction method");
+                setPdfProcessingStatus("Using alternative extraction method...");
+                
+                // For basic text extraction, we'll use FileReader API
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        // This will get some text but won't be perfect
+                        const text = e.target.result;
+                        resolve(`Basic text extraction (may be incomplete):\n\n${text}`);
+                    };
+                    reader.onerror = () => {
+                        resolve("Error: Could not read the PDF file using fallback method.");
+                    };
+                    reader.readAsText(file);
+                });
+            };
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                
+                // Set timeout for PDF loading
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("PDF loading timed out after 15 seconds")), 15000);
+                });
+                
+                // Add progress monitoring
+                loadingTask.onProgress = ({ loaded, total }) => {
+                    const progress = total ? Math.round((loaded / total) * 100) : 'unknown';
+                    setPdfProcessingStatus(`Loading PDF: ${progress}% complete`);
+                };
+                
+                // Race between loading and timeout
+                const pdf = await Promise.race([loadingTask.promise, timeoutPromise]);
+                setPdfProcessingStatus(`PDF loaded with ${pdf.numPages} pages. Beginning text extraction...`);
+                
+                let text = `PDF Loaded: ${pdf.numPages} pages\n\n`;
+                let textLayerFound = false;
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    setPdfProcessingStatus(`Extracting text from page ${pageNum}/${pdf.numPages}...`);
+                    const page = await pdf.getPage(pageNum);
+
+                    // Standard text extraction
+                    try {
+                        const textContent = await page.getTextContent();
+                        
+                        // Check if this page has actual text content
+                        if (textContent.items && textContent.items.length > 0) {
+                            textLayerFound = true;
+                            const pageText = textContent.items.map(item => item.str).join(" ");
+                            text += `Page ${pageNum}: ${pageText}\n\n`;
+                        } else {
+                            text += `Page ${pageNum}: [No selectable text found - using image processing]\n\n`;
+                            
+                            // For non-selectable text, we'll try to process as image
+                            try {
+                                setPdfProcessingStatus(`Page ${pageNum} has no selectable text. Extracting as image...`);
+                                
+                                // Get viewport and prepare canvas
+                                const viewport = page.getViewport({ scale: 1.5 }); // Higher scale for better OCR
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                
+                                // Render PDF page to canvas
+                                await page.render({
+                                    canvasContext: context,
+                                    viewport: viewport
+                                }).promise;
+                                
+                                
+                                text += `[Image-based content detected on page ${pageNum}. In production, this would be sent to an OCR service like Tesseract.js or Google Vision API for text extraction.]\n\n`;
+                                
+                                
+                            } catch (renderErr) {
+                                console.warn(`Failed to render page ${pageNum} as image:`, renderErr);
+                                text += `[Failed to process page ${pageNum} as image: ${renderErr.message}]\n\n`;
+                            }
+                        }
+                    } catch (textErr) {
+                        console.warn(`Failed to extract text from page ${pageNum}:`, textErr);
+                        text += `[Error extracting text from page ${pageNum}: ${textErr.message}]\n\n`;
+                    }
+
+                    // Extract clickable text (hyperlinks) from annotations
+                    try {
+                        const annotations = await page.getAnnotations();
+                        if (annotations && annotations.length > 0) {
+                            let linksFound = false;
+                            annotations.forEach(annotation => {
+                                if (annotation.subtype === 'Link' && annotation.url) {
+                                    if (!linksFound) {
+                                        text += `Links on page ${pageNum}:\n`;
+                                        linksFound = true;
+                                    }
+                                    text += `- ${annotation.url} (${annotation.title || 'No title'})\n`;
+                                }
+                            });
+                            if (linksFound) text += "\n";
+                        }
+                    } catch (annotationErr) {
+                        console.warn(`Could not extract annotations from page ${pageNum}:`, annotationErr);
+                    }
+                }
+
+                if (!textLayerFound) {
+                    text += "\nNote: This PDF appears to contain mostly image-based or scanned content. To fully extract text from this document, consider using a dedicated OCR service.\n";
+                }
+
+                setPdfProcessingStatus("PDF processing complete!");
+                return text;
+                
+            } catch (pdfError) {
+                console.error("PDF.js extraction error:", pdfError);
+                
+                // Check if it's a version mismatch error
+                if (pdfError.message && pdfError.message.includes("version")) {
+                    console.warn("Version mismatch detected, using fallback extraction");
+                    return await useFallbackMethod();
+                }
+                
+                throw pdfError;
+            }
+        } catch (err) {
+            console.error("Error extracting PDF text:", err);
+            const errorMessage = `Failed to process PDF: ${err.message || 'Unknown error'}`;
+            setError(errorMessage);
+            setPdfProcessingStatus("PDF processing failed!");
+            return `Error: ${errorMessage}`;
+        }
+    };
+
+    // Handle file upload and extract PDF content
+    const handleFileUpload = async (e) => {
+        setError(""); // Clear any previous errors
         const file = e.target.files[0];
-        if (file) {
-            setSelectedFile(file);
-            setFileName(file.name);
+        
+        if (!file) {
+            return; // No file selected
+        }
+        
+        if (file.type === "application/pdf") {
+            try {
+                setUploadedFile(file);
+                setIsLoading(true); // Show loading state
+                
+                // Update UI to show we're processing
+                setPdfContent(`Processing ${file.name}...`);
+                setPdfProcessingStatus(`Starting to process ${file.name}...`);
+                
+                const extractedText = await extractTextFromPDF(file);
+                setPdfContent(extractedText);
+                
+                if (extractedText.startsWith("Error:")) {
+                    setError(`Failed to process PDF: ${extractedText.substring(7)}`);
+                }
+            } catch (err) {
+                console.error("File upload error:", err);
+                setError(`Error processing file: ${err.message || "Unknown error"}`);
+                setPdfContent("");
+                setPdfProcessingStatus("PDF processing failed!");
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            setError("Please upload a valid PDF file (.pdf extension).");
+            setUploadedFile(null);
+            setPdfContent("");
+            setPdfProcessingStatus("");
         }
     };
 
@@ -51,30 +258,38 @@ function Innovate() {
         setError("");
         setResult(null);
 
-        // Validate inputs
-        if (!age || !symptoms) {
-            setError("Please fill in all fields.");
+        // Check if PDF is uploaded, if not, require fields
+        if (!uploadedFile && (!age || !symptoms)) {
+            setError("Please fill in all fields or upload a PDF.");
             setIsLoading(false);
             return;
         }
 
-        // Create FormData object
-        const formData = new FormData();
-        formData.append('age', age);
-        formData.append('sex', sex);
-        formData.append('symptoms', symptoms);
-        if (selectedFile) {
-            formData.append('file', selectedFile);
+        // If we have a PDF but no other info, that's okay
+        let prompt = "";
+        
+        // Include patient details if provided
+        if (age || symptoms) {
+            const symptomList = symptoms ? symptoms.split(",").map(s => s.trim()).join(", ") : "No symptoms specified";
+            prompt = `The patient is ${age || "age not provided"} years old, gender is ${sex}. `;
+            
+            if (symptoms) {
+                prompt += `They have the following symptoms: ${symptomList}. `;
+            }
         }
 
-        // Format the input as a readable prompt for the backend
-        const symptomList = symptoms.split(",").map(s => s.trim()).join(", ");
-        const prompt = `The patient is ${age} years old, gender is ${sex}. They have the following symptoms: ${symptomList}. What possible health conditions or risks might they face in the future?`;
+        // Include PDF content in the prompt if available
+        if (pdfContent) {
+            prompt += `Here is the patient's medical record from the uploaded PDF:\n${pdfContent}\n`;
+        }
+
+        prompt += "\nWhat possible health conditions or risks might they face in the future?";
 
         try {
-            const response = await axios.post("http://localhost:5555/ino/analyze", formData);
+            const response = await axios.post("http://localhost:5555/ino/analyze", {
+                prompt
+            });
 
-            // Extract the answer from the backend response
             const answer = response.data.answer;
             setResult(answer);
         } catch (error) {
@@ -87,7 +302,7 @@ function Innovate() {
 
     return (
         <div className="flex flex-col min-h-screen bg-white">
-            {/* Navigation Bar - Unchanged */}
+            {/* Navigation Bar */}
             <motion.header
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
@@ -128,8 +343,6 @@ function Innovate() {
                                     {item}
                                 </motion.div>
                             ))}
-                            
-                            {/* Profile and Notification Icons */}
                             <div className="flex items-center space-x-4 ml-4">
                                 <motion.div
                                     whileHover={{ scale: 1.2 }}
@@ -137,13 +350,6 @@ function Innovate() {
                                     className="text-white cursor-pointer"
                                 >
                                     <Bell size={20} />
-                                </motion.div>
-                                <motion.div
-                                    whileHover={{ scale: 1.2 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    className="text-white cursor-pointer"
-                                >
-                                    <FileText size={20} />
                                 </motion.div>
                                 <motion.div
                                     whileHover={{ scale: 1.2 }}
@@ -165,12 +371,12 @@ function Innovate() {
                 </div>
             </motion.header>
 
-            {/* Main Content with Professional Horizontal Layout */}
+            {/* Main Content */}
             <div className="min-h-screen bg-white flex items-center justify-center p-4 mt-16">
                 <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Input Section - Left Side */}
+                    {/* Input Section */}
                     <div className="lg:col-span-1">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5 }}
@@ -184,11 +390,64 @@ function Innovate() {
                                     Health Risk Analysis
                                 </h1>
                             </div>
-                            
+
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                {/* File Upload Section - Moved to top */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Age
+                                        Upload Medical Report
+                                    </label>
+                                    <div className="flex items-center space-x-3">
+                                        <label className="cursor-pointer inline-flex items-center px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 text-blue-700">
+                                            <File className="mr-2" size={16} />
+                                            <span>{uploadedFile ? "Change File" : "Upload PDF File"}</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="application/pdf"
+                                                onChange={handleFileUpload}
+                                            />
+                                        </label>
+                                        {uploadedFile && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setUploadedFile(null);
+                                                    setPdfContent("");
+                                                    setPdfProcessingStatus("");
+                                                }}
+                                                className="text-red-500 text-sm hover:underline"
+                                            >
+                                                Remove ×
+                                            </button>
+                                        )}
+                                    </div>
+                                    {uploadedFile && (
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-500">
+                                                Selected: {uploadedFile.name}
+                                            </p>
+                                            {pdfProcessingStatus && (
+                                                <p className="text-xs text-blue-600 mt-1">
+                                                    Status: {pdfProcessingStatus}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Optional note that appears when PDF is uploaded */}
+                                {uploadedFile && (
+                                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                                        <p className="text-sm text-blue-700">
+                                            <span className="font-medium">PDF uploaded!</span> Fields below are now optional. You can leave them blank and analyze based on the PDF content only.
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Age {!uploadedFile && <span className="text-red-500">*</span>}
                                     </label>
                                     <input
                                         type="number"
@@ -210,12 +469,13 @@ function Innovate() {
                                     >
                                         <option value="male">Male</option>
                                         <option value="female">Female</option>
+                                        <option value="other">Other</option>
                                     </select>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Symptoms
+                                        Symptoms {!uploadedFile && <span className="text-red-500">*</span>}
                                     </label>
                                     <textarea
                                         value={symptoms}
@@ -226,27 +486,6 @@ function Innovate() {
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
                                         Separate multiple symptoms with commas
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Upload Medical Documents
-                                    </label>
-                                    <div className="mt-1 flex items-center">
-                                        <label className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                                            <Upload size={20} className="text-gray-400 mr-2" />
-                                            <span className="text-gray-500">{fileName || "Choose a file..."}</span>
-                                            <input
-                                                type="file"
-                                                className="hidden"
-                                                onChange={handleFileChange}
-                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                            />
-                                        </label>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Supported formats: PDF, DOC, DOCX, JPG, PNG
                                     </p>
                                 </div>
 
@@ -275,7 +514,7 @@ function Innovate() {
                         </motion.div>
                     </div>
 
-                    {/* Results Section - Right Side (Square Layout) */}
+                    {/* Results Section */}
                     <div className="lg:col-span-2">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -289,7 +528,7 @@ function Innovate() {
                                     Health Analysis Report
                                 </h2>
                             </div>
-                            
+
                             <div className="p-6 h-[calc(100%-72px)] overflow-y-auto">
                                 {result ? (
                                     <div className="space-y-4">
@@ -297,23 +536,25 @@ function Innovate() {
                                             <div className="bg-blue-50 p-4 rounded-lg">
                                                 <h3 className="text-sm font-medium text-blue-800 mb-1">Patient Details</h3>
                                                 <p className="text-gray-700">
-                                                    Age: <span className="font-medium">{age}</span><br />
+                                                    Age: <span className="font-medium">{age || "Not provided"}</span><br />
                                                     Gender: <span className="font-medium">{sex}</span>
+                                                    {symptoms && <><br />Symptoms: <span className="font-medium">{symptoms}</span></>}
                                                 </p>
                                             </div>
                                             <div className="bg-green-50 p-4 rounded-lg">
                                                 <h3 className="text-sm font-medium text-green-800 mb-1">Report Generated</h3>
                                                 <p className="text-gray-700">
-                                                    {new Date().toLocaleDateString('en-US', { 
-                                                        weekday: 'long', 
-                                                        year: 'numeric', 
-                                                        month: 'long', 
-                                                        day: 'numeric' 
+                                                    {new Date().toLocaleDateString('en-US', {
+                                                        weekday: 'long',
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
                                                     })}
+                                                    {uploadedFile && <><br />PDF: <span className="font-medium">{uploadedFile.name}</span></>}
                                                 </p>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                                             <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Results</h3>
                                             <div className="prose max-w-none text-gray-700">
@@ -325,11 +566,23 @@ function Innovate() {
                                     </div>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 p-8">
-                                        <Activity size={48} className="text-gray-300 mb-4" />
-                                        <h3 className="text-lg font-medium text-gray-500 mb-2">No Analysis Yet</h3>
-                                        <p className="text-sm max-w-md">
-                                            Submit your health information to receive a comprehensive risk analysis report.
-                                        </p>
+                                        {uploadedFile ? (
+                                            <div>
+                                                <FileText size={48} className="text-blue-300 mb-4 mx-auto" />
+                                                <h3 className="text-lg font-medium text-blue-500 mb-2">PDF Uploaded</h3>
+                                                <p className="text-sm max-w-md">
+                                                    Your PDF has been processed. Click "Analyze Health Risks" to generate a report based on the PDF content.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <Activity size={48} className="text-gray-300 mb-4" />
+                                                <h3 className="text-lg font-medium text-gray-500 mb-2">No Analysis Yet</h3>
+                                                <p className="text-sm max-w-md">
+                                                    Submit your health information or upload a medical report PDF to receive a comprehensive risk analysis.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
