@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { User, Bell, Activity } from 'lucide-react';
+import { User, Bell, Activity, FileText, Upload } from 'lucide-react';
 import axios from "axios";
 
 function Innovate() {
@@ -12,6 +12,8 @@ function Innovate() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [activeNav, setActiveNav] = useState('Features');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [fileName, setFileName] = useState("");
 
     // Navigation animation variants
     const navItem = {
@@ -35,6 +37,14 @@ function Innovate() {
 
     const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file);
+            setFileName(file.name);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -48,14 +58,21 @@ function Innovate() {
             return;
         }
 
+        // Create FormData object
+        const formData = new FormData();
+        formData.append('age', age);
+        formData.append('sex', sex);
+        formData.append('symptoms', symptoms);
+        if (selectedFile) {
+            formData.append('file', selectedFile);
+        }
+
         // Format the input as a readable prompt for the backend
         const symptomList = symptoms.split(",").map(s => s.trim()).join(", ");
         const prompt = `The patient is ${age} years old, gender is ${sex}. They have the following symptoms: ${symptomList}. What possible health conditions or risks might they face in the future?`;
 
         try {
-            const response = await axios.post("http://localhost:5555/ino/analyze", {
-                prompt
-            });
+            const response = await axios.post("http://localhost:5555/ino/analyze", formData);
 
             // Extract the answer from the backend response
             const answer = response.data.answer;
@@ -120,6 +137,13 @@ function Innovate() {
                                     className="text-white cursor-pointer"
                                 >
                                     <Bell size={20} />
+                                </motion.div>
+                                <motion.div
+                                    whileHover={{ scale: 1.2 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="text-white cursor-pointer"
+                                >
+                                    <FileText size={20} />
                                 </motion.div>
                                 <motion.div
                                     whileHover={{ scale: 1.2 }}
@@ -202,6 +226,27 @@ function Innovate() {
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
                                         Separate multiple symptoms with commas
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Upload Medical Documents
+                                    </label>
+                                    <div className="mt-1 flex items-center">
+                                        <label className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <Upload size={20} className="text-gray-400 mr-2" />
+                                            <span className="text-gray-500">{fileName || "Choose a file..."}</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                            />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Supported formats: PDF, DOC, DOCX, JPG, PNG
                                     </p>
                                 </div>
 
