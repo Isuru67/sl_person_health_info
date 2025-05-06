@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { User, Bell, Activity } from 'lucide-react';
+import { User, Bell, Activity, File } from 'lucide-react';
 import axios from "axios";
 
 function Innovate() {
@@ -12,8 +12,8 @@ function Innovate() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [activeNav, setActiveNav] = useState('Features');
+    const [uploadedFile, setUploadedFile] = useState(null); // NEW
 
-    // Navigation animation variants
     const navItem = {
         hidden: { y: -20, opacity: 0 },
         visible: (i) => ({
@@ -41,14 +41,12 @@ function Innovate() {
         setError("");
         setResult(null);
 
-        // Validate inputs
         if (!age || !symptoms) {
             setError("Please fill in all fields.");
             setIsLoading(false);
             return;
         }
 
-        // Format the input as a readable prompt for the backend
         const symptomList = symptoms.split(",").map(s => s.trim()).join(", ");
         const prompt = `The patient is ${age} years old, gender is ${sex}. They have the following symptoms: ${symptomList}. What possible health conditions or risks might they face in the future?`;
 
@@ -57,7 +55,6 @@ function Innovate() {
                 prompt
             });
 
-            // Extract the answer from the backend response
             const answer = response.data.answer;
             setResult(answer);
         } catch (error) {
@@ -70,7 +67,7 @@ function Innovate() {
 
     return (
         <div className="flex flex-col min-h-screen bg-white">
-            {/* Navigation Bar - Unchanged */}
+            {/* Navigation Bar */}
             <motion.header
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
@@ -111,8 +108,6 @@ function Innovate() {
                                     {item}
                                 </motion.div>
                             ))}
-                            
-                            {/* Profile and Notification Icons */}
                             <div className="flex items-center space-x-4 ml-4">
                                 <motion.div
                                     whileHover={{ scale: 1.2 }}
@@ -141,12 +136,12 @@ function Innovate() {
                 </div>
             </motion.header>
 
-            {/* Main Content with Professional Horizontal Layout */}
+            {/* Main Content */}
             <div className="min-h-screen bg-white flex items-center justify-center p-4 mt-16">
                 <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Input Section - Left Side */}
+                    {/* Input Section */}
                     <div className="lg:col-span-1">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5 }}
@@ -160,7 +155,7 @@ function Innovate() {
                                     Health Risk Analysis
                                 </h1>
                             </div>
-                            
+
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -205,6 +200,38 @@ function Innovate() {
                                     </p>
                                 </div>
 
+                                {/* File Upload Section */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Upload Report (Optional)
+                                    </label>
+                                    <div className="flex items-center space-x-3">
+                                        <label className="cursor-pointer inline-flex items-center px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 text-gray-700">
+                                            <File className="mr-2" size={16} />
+                                            <span>{uploadedFile ? "Change File" : "Upload File"}</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                onChange={(e) => setUploadedFile(e.target.files[0])}
+                                            />
+                                        </label>
+                                        {uploadedFile && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setUploadedFile(null)}
+                                                className="text-red-500 text-sm hover:underline"
+                                            >
+                                                Remove ×
+                                            </button>
+                                        )}
+                                    </div>
+                                    {uploadedFile && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Selected: {uploadedFile.name}
+                                        </p>
+                                    )}
+                                </div>
+
                                 {error && (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
                                         {error}
@@ -230,7 +257,7 @@ function Innovate() {
                         </motion.div>
                     </div>
 
-                    {/* Results Section - Right Side (Square Layout) */}
+                    {/* Results Section */}
                     <div className="lg:col-span-2">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -244,7 +271,7 @@ function Innovate() {
                                     Health Analysis Report
                                 </h2>
                             </div>
-                            
+
                             <div className="p-6 h-[calc(100%-72px)] overflow-y-auto">
                                 {result ? (
                                     <div className="space-y-4">
@@ -259,16 +286,16 @@ function Innovate() {
                                             <div className="bg-green-50 p-4 rounded-lg">
                                                 <h3 className="text-sm font-medium text-green-800 mb-1">Report Generated</h3>
                                                 <p className="text-gray-700">
-                                                    {new Date().toLocaleDateString('en-US', { 
-                                                        weekday: 'long', 
-                                                        year: 'numeric', 
-                                                        month: 'long', 
-                                                        day: 'numeric' 
+                                                    {new Date().toLocaleDateString('en-US', {
+                                                        weekday: 'long',
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
                                                     })}
                                                 </p>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                                             <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Results</h3>
                                             <div className="prose max-w-none text-gray-700">
