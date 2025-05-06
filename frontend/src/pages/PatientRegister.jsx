@@ -57,8 +57,16 @@ const PatientRegister = () => {
   };
 
   const validateNIC = (nic) => {
-    const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
-    return nicRegex.test(nic.trim());
+    const nicValue = nic.trim();
+    // For new NIC format (12 digits)
+    if (/^\d{12}$/.test(nicValue)) {
+      return true;
+    }
+    // For old NIC format (9 digits + V)
+    if (/^\d{10}[vV]$/.test(nicValue)) {
+      return true;
+    }
+    return false;
   };
 
   const validateTelephone = (tele) => {
