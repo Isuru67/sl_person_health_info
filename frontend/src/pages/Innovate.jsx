@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
+
 import { User, Bell, Activity, File, FileText, AlertTriangle, Download } from 'lucide-react';
 import axios from "axios";
 import * as pdfjsLib from 'pdfjs-dist';
 import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
+
 
 // Get the PDF.js version and set up the worker
 const setupPdfWorker = () => {
@@ -151,7 +153,9 @@ function Innovate() {
                                     viewport: viewport
                                 }).promise;
                                 
+                                
                                 text += `[Image-based content detected on page ${pageNum}. In production, this would be sent to an OCR service like Tesseract.js or Google Vision API for text extraction.]\n\n`;
+                                
                                 
                             } catch (renderErr) {
                                 console.warn(`Failed to render page ${pageNum} as image:`, renderErr);
@@ -282,7 +286,7 @@ function Innovate() {
             prompt += `Here is the patient's medical record from the uploaded PDF:\n${pdfContent}\n`;
         }
 
-        prompt += "\nWhat possible health conditions or risks might they face in the future? and tell me the possible treatment for them. Also tell what probability of having these conditions? probability should be in percentage.";
+        prompt += "\nWhat possible health conditions or risks might they face in the future?";
 
         try {
             const response = await axios.post("http://localhost:5555/ino/analyze", {
