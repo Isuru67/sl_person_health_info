@@ -57,8 +57,16 @@ const PatientRegister = () => {
   };
 
   const validateNIC = (nic) => {
-    const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
-    return nicRegex.test(nic.trim());
+    const nicValue = nic.trim();
+    // For new NIC format (12 digits)
+    if (/^\d{12}$/.test(nicValue)) {
+      return true;
+    }
+    // For old NIC format (9 digits + V)
+    if (/^\d{10}[vV]$/.test(nicValue)) {
+      return true;
+    }
+    return false;
   };
 
   const validateTelephone = (tele) => {
@@ -76,12 +84,54 @@ const PatientRegister = () => {
     return passwordRegex.test(password);
   };
 
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'name':
+        return validateName(value) ? '' : 'Name must be 2-50 characters and contain only letters';
+      case 'nic':
+        return validateNIC(value) ? '' : 'Invalid NIC number';
+      case 'dob':
+        return value ? '' : 'Date of birth is required';
+      case 'blood':
+        return value ? '' : 'Blood group is required';
+      case 'tele':
+        return validateTelephone(value) ? '' : 'Invalid telephone number (10 digits)';
+      case 'email':
+        return validateEmail(value) ? '' : 'Invalid email address';
+      case 'username':
+        return value ? '' : 'Username is required';
+      case 'password':
+        return validatePassword(value) ? '' : 'Password must be at least 8 characters, include uppercase, lowercase, and number';
+      case 'confirmPassword':
+        return value === formData.password ? '' : 'Passwords do not match';
+      default:
+        return '';
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Real-time validation
+    const errorMessage = validateField(name, value);
+    setErrors(prev => ({
+      ...prev,
+      [name]: errorMessage
+    }));
+
+    // Special case for confirm password
+    if (name === 'password') {
+      if (formData.confirmPassword) {
+        setErrors(prev => ({
+          ...prev,
+          confirmPassword: formData.confirmPassword === value ? '' : 'Passwords do not match'
+        }));
+      }
+    }
   };
 
   const handleFileChange = (e) => {
@@ -102,42 +152,12 @@ const PatientRegister = () => {
   
   const validateForm = () => {
     const newErrors = {};
-
-    if (!validateName(formData.name)) {
-      newErrors.name = 'Name must be 2-50 characters and contain only letters';
-    }
-
-    if (!validateNIC(formData.nic)) {
-      newErrors.nic = 'Invalid NIC number';
-    }
-
-    if (!formData.dob) {
-      newErrors.dob = 'Date of birth is required';
-    }
-
-    if (!formData.blood) {
-      newErrors.blood = 'Blood group is required';
-    }
-
-    if (!validateTelephone(formData.tele)) {
-      newErrors.tele = 'Invalid telephone number (10 digits)';
-    }
-
-    if (!validateEmail(formData.email)) {
-      newErrors.email = 'Invalid email address';
-    }
-
-    if (!formData.username) {
-      newErrors.username = 'Username is required';
-    }
-
-    if (!validatePassword(formData.password)) {
-      newErrors.password = 'Password must be at least 8 characters, include uppercase, lowercase, and number';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
+    Object.keys(formData).forEach(key => {
+      const errorMessage = validateField(key, formData[key]);
+      if (errorMessage) {
+        newErrors[key] = errorMessage;
+      }
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
