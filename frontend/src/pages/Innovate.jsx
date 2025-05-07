@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
-import { User, Bell, Activity, File, FileText, AlertTriangle } from 'lucide-react';
+import { User, Bell, Activity, File, FileText, AlertTriangle, Download } from 'lucide-react';
 import axios from "axios";
 import * as pdfjsLib from 'pdfjs-dist';
+import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
 
 // Get the PDF.js version and set up the worker
 const setupPdfWorker = () => {
@@ -150,9 +151,7 @@ function Innovate() {
                                     viewport: viewport
                                 }).promise;
                                 
-                                
                                 text += `[Image-based content detected on page ${pageNum}. In production, this would be sent to an OCR service like Tesseract.js or Google Vision API for text extraction.]\n\n`;
-                                
                                 
                             } catch (renderErr) {
                                 console.warn(`Failed to render page ${pageNum} as image:`, renderErr);
@@ -283,7 +282,7 @@ function Innovate() {
             prompt += `Here is the patient's medical record from the uploaded PDF:\n${pdfContent}\n`;
         }
 
-        prompt += "\nWhat possible health conditions or risks might they face in the future?";
+        prompt += "\nWhat possible health conditions or risks might they face in the future? and tell me the possible treatment for them. Also tell what probability of having these conditions? probability should be in percentage.";
 
         try {
             const response = await axios.post("http://localhost:5555/ino/analyze", {
@@ -298,6 +297,71 @@ function Innovate() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Function to download the report as a PDF
+    const downloadReportAsPDF = () => {
+        const doc = new jsPDF();
+        let yOffset = 10;
+
+        // Title
+        doc.setFontSize(18);
+        doc.text("Health Analysis Report", 10, yOffset);
+        yOffset += 10;
+
+        // Patient Details Section
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Patient Details", 10, yOffset);
+        yOffset += 5;
+        doc.setFont("helvetica", "normal");
+        doc.text(`Age: ${age || "Not provided"}`, 10, yOffset);
+        yOffset += 5;
+        doc.text(`Gender: ${sex}`, 10, yOffset);
+        yOffset += 5;
+        if (symptoms) {
+            doc.text(`Symptoms: ${symptoms}`, 10, yOffset);
+            yOffset += 5;
+        }
+
+        // Report Generated Section
+        yOffset += 5;
+        doc.setFont("helvetica", "bold");
+        doc.text("Report Generated", 10, yOffset);
+        yOffset += 5;
+        doc.setFont("helvetica", "normal");
+        doc.text(new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }), 10, yOffset);
+        yOffset += 5;
+        if (uploadedFile) {
+            doc.text(`PDF: ${uploadedFile.name}`, 10, yOffset);
+            yOffset += 5;
+        }
+
+        // Analysis Results Section
+        yOffset += 5;
+        doc.setFont("helvetica", "bold");
+        doc.text("Analysis Results", 10, yOffset);
+        yOffset += 5;
+        doc.setFont("helvetica", "normal");
+
+        // Split the result into lines and handle page overflow
+        const lines = doc.splitTextToSize(result, 180); // 180 is the width of the page minus margins
+        for (let i = 0; i < lines.length; i++) {
+            if (yOffset > 270) { // If we're near the bottom of the page, add a new page
+                doc.addPage();
+                yOffset = 10;
+            }
+            doc.text(lines[i], 10, yOffset);
+            yOffset += 5;
+        }
+
+        // Download the PDF
+        doc.save("Health_Analysis_Report.pdf");
     };
 
     return (
@@ -522,11 +586,20 @@ function Innovate() {
                             transition={{ duration: 0.5, delay: 0.2 }}
                             className="h-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
                         >
-                            <div className="p-6 bg-gradient-to-r from-blue-50 to-gray-50 border-b border-gray-200">
+                            <div className="p-6 bg-gradient-to-r from-blue-50 to-gray-50 border-b border-gray-200 flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-gray-800 flex items-center">
                                     <Activity className="text-blue-600 mr-2" size={20} />
                                     Health Analysis Report
                                 </h2>
+                                {result && (
+                                    <button
+                                        onClick={downloadReportAsPDF}
+                                        className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                    >
+                                        <Download className="mr-2" size={16} />
+                                        Download PDF
+                                    </button>
+                                )}
                             </div>
 
                             <div className="p-6 h-[calc(100%-72px)] overflow-y-auto">
