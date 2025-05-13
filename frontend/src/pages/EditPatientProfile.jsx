@@ -192,6 +192,16 @@ const EditPatientProfile = () => {
                 {patient.name || 'Edit Patient'}
               </motion.div>
               
+              {patient.pic && (
+                <motion.img
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  src={`http://localhost:5555/uploads/${patient.pic}`}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border-2 border-white cursor-pointer object-cover"
+                />
+              )}
+              
               {/* Logout Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -203,16 +213,6 @@ const EditPatientProfile = () => {
                 <MdLogout className="text-xl mr-1" />
                 <span className="hidden md:inline">Logout</span>
               </motion.button>
-              
-              {patient.pic && (
-                <motion.img
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  src={`http://localhost:5555/uploads/${patient.pic}`}
-                  alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-white cursor-pointer object-cover"
-                />
-              )}
             </div>
           </div>
         </div>
