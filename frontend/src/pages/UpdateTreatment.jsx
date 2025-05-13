@@ -32,11 +32,22 @@ const UpdateTreatment = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Get hospital info
+        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('userInfo') || '{}');
+        
+        setLoading(true);
         axios.get(`http://localhost:5555/api/treatment/${nic}`)
             .then((res) => {
                 const selectedTreatment = res.data.find(treatment => treatment._id === treatmentId);
 
                 if (selectedTreatment) {
+                    // Check if this treatment belongs to the current hospital
+                    if (selectedTreatment.hospitalId !== user.hospitalId) {
+                        alert("You can only update treatments added by your hospital.");
+                        navigate(`/h-patientdetails/view/${nic}`);
+                        return;
+                    }
+                    
                     setFormData(selectedTreatment);
                 } else {
                     alert("Treatment record not found.");

@@ -42,10 +42,26 @@ router.post('/treatment/:nic', async (request, response) => {
 
 router.get('/treatment/:nic', async (req, res) => {
     try {
-        const treatments = await Treatment.find({ patient_nic: req.params.nic });
-        if (treatments.length === 0) {
-            return res.status(404).json({ error: "Treatment not found" });
+        const { nic } = req.params;
+        const { hospitalId } = req.query; // Get hospitalId from query parameters
+        
+        let query = { patient_nic: nic };
+        
+        // If hospitalId is provided, add it to the query filter
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
         }
+        
+        const treatments = await Treatment.find(query);
+        
+        if (treatments.length === 0) {
+            return res.status(404).json({ 
+                error: hospitalId 
+                    ? "No treatments found for this patient that were added by your hospital" 
+                    : "Treatment not found" 
+            });
+        }
+        
         res.json(treatments);
     } catch (error) {
         res.status(500).json({ error: "Server error" });
