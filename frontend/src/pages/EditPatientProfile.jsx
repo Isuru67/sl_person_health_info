@@ -192,6 +192,16 @@ const EditPatientProfile = () => {
                 {patient.name || 'Edit Patient'}
               </motion.div>
               
+              {patient.pic && (
+                <motion.img
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  src={`http://localhost:5555/uploads/${patient.pic}`}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border-2 border-white cursor-pointer object-cover"
+                />
+              )}
+              
               {/* Logout Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -203,16 +213,6 @@ const EditPatientProfile = () => {
                 <MdLogout className="text-xl mr-1" />
                 <span className="hidden md:inline">Logout</span>
               </motion.button>
-              
-              {patient.pic && (
-                <motion.img
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  src={`http://localhost:5555/uploads/${patient.pic}`}
-                  alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-white cursor-pointer object-cover"
-                />
-              )}
             </div>
           </div>
         </div>
@@ -220,15 +220,6 @@ const EditPatientProfile = () => {
 
       {/* Main Content */}
       <div className="pt-24 pb-12 px-4 container mx-auto">
-        {/* BackButton */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute left-6 top-20 z-40"
-        >
-          <BackButton className="text-gray-700 hover:text-indigo-600" />
-        </motion.div>
         <motion.h1 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
