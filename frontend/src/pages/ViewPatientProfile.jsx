@@ -380,21 +380,6 @@ const ViewPatientProfile = () => {
                     </p>
                   </motion.div>
                 </div>
-
-                {/* Medical Summary Section */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                  className="mt-8"
-                >
-                  <h3 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Medical Summary</h3>
-                  <div className="bg-blue-50 p-6 rounded-lg">
-                    <p className="text-gray-700">
-                      {patient.medicalSummary || 'No medical summary available. Please consult with your healthcare provider.'}
-                    </p>
-                  </div>
-                </motion.div>
               </div>
             </div>
 
