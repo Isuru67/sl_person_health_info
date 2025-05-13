@@ -59,7 +59,10 @@ const App = () => {
         <Route path='/' element={<Home/>} />
         <Route path='/admin' element={<AdminLogin/>} />       
         <Route path='/user' element={<UserLogin/>} />
-        <Route path='/hospitaldashboard' element={<HospitalDashboard />} />
+        <Route path='/patient/register' element={<PatientRegister/>}/>
+        <Route path='/patient/view/:id' element={<ViewPatientProfile/>}/>
+        <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
+        <Route path='/patient/Delete/:id' element={<DeletePatientProfile/>}/>
         <Route path='/hospitaldashboard/:hospitalName' element={<HospitalDashboard />} />
         
         {/* Add new routes with hospitalName parameter */}
