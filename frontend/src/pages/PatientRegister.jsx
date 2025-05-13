@@ -29,7 +29,7 @@ const PatientRegister = () => {
   const [loading, setLoading] = useState(false);
   const [activeNav, setActiveNav] = useState('Register');
 
-  const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
+  const navItems = ['Home', 'Features', 'About Us', 'Contact'];
 
   // Cleanup preview URL when component unmounts or when new image is selected
   useEffect(() => {
