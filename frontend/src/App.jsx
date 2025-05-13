@@ -60,22 +60,31 @@ const App = () => {
         <Route path='/admin' element={<AdminLogin/>} />       
         <Route path='/user' element={<UserLogin/>} />
         <Route path='/hospitaldashboard' element={<HospitalDashboard />} />
-        <Route path='/patient/register' element={<PatientRegister/>}/>
-        <Route path='/patient/view/:id' element={<ViewPatientProfile/>}/>
-        <Route path='/patient/Edit/:id' element={<EditPatientProfile/>}/>
-        <Route path='/patient/Delete/:id' element={<DeletePatientProfile/>}/>
+        <Route path='/hospitaldashboard/:hospitalName' element={<HospitalDashboard />} />
+        
+        {/* Add new routes with hospitalName parameter */}
+        <Route path='/:hospitalName/h-patientdetails' element={<H_PatientDetails formData={formData} setFormData={setFormData} />} />
+        <Route path='/:hospitalName/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
+        <Route path='/:hospitalName/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
+        <Route path='/:hospitalName/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
+        <Route path='/:hospitalName/h-patientdetails/view/:nic' element={<ViewTreatment />} />
+        <Route path='/:hospitalName/h-patientdetails/update/:nic/:treatmentId' element={<UpdateTreatment />} />
+        
+        {/* Keep original routes for backward compatibility */}
         <Route path='/h-patientdetails' element={<H_PatientDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/ho-admission/:nic' element={<Ho_AdmissionDetails formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/medical-history/:nic' element={<MedicalHistory formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
-         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment  />} />
-         <Route path='/h-patientdetails/update/:nic/:treatmentId' element={<UpdateTreatment  />} />
-         <Route path='/traetmentreort' element={<TreatmentReportPage  />} />
-         <Route path='/innov' element={<Innovate/>} />
-         <Route path='/hospital-register' element={<HospitalRegister/>} />
-         <Route path='/hospital-view/:hospitalId' element={<ViewHospital/>} />
-         <Route path='/admin-dashboard' element={<AdminDashboard/>} />
-         <Route path='/hospital-edit/:hospitalId' element={<EditHospital/>} /> 
+        <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment />} />
+        <Route path='/h-patientdetails/update/:nic/:treatmentId' element={<UpdateTreatment />} />
+         
+        {/* Remaining routes */}
+        <Route path='/traetmentreort' element={<TreatmentReportPage />} />
+        <Route path='/innov' element={<Innovate/>} />
+        <Route path='/hospital-register' element={<HospitalRegister/>} />
+        <Route path='/hospital-view/:hospitalId' element={<ViewHospital/>} />
+        <Route path='/admin-dashboard' element={<AdminDashboard/>} />
+        <Route path='/hospital-edit/:hospitalId' element={<EditHospital/>} /> 
     </Routes>
   )
 }

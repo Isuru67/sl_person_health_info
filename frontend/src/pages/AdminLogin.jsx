@@ -53,7 +53,19 @@ const AdminLogin = () => {
           navigate('/user'); // Fallback to generic user route if no ID found
         }
       } else if (role === 'hospital') {
-        navigate('/hospitaldashboard'); // Make sure this route exists in your app
+        // Store the complete user object
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+
+        // Create URL-friendly hospital name by replacing spaces with dashes and removing special characters
+        const hospitalNameForUrl = response.data.user.hospitalName
+          ? response.data.user.hospitalName
+              .toLowerCase()
+              .replace(/[^\w\s-]/g, '') // Remove special characters
+              .replace(/\s+/g, '-')     // Replace spaces with dashes
+          : 'dashboard';
+        
+        // Navigate to hospital dashboard with hospital name in URL
+        navigate(`/hospitaldashboard/${hospitalNameForUrl}`);
       } else if (role === 'admin') {
         navigate('/admin-dashboard');
       }

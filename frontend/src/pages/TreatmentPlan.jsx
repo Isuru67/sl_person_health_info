@@ -38,11 +38,23 @@ const TreatmentPlan = ({ formData, setFormData }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-         // Construct the updatedFormData
-    const updatedFormData = {
-        ...formData,
-        nic,  // Add NIC to associate with the patient
-    };
+        // Get hospital info from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('userInfo') || '{}');
+        
+        // Ensure we have hospital information
+        if (!user.hospitalId || !user.hospitalName) {
+            alert("Hospital information is missing. Please log in again.");
+            navigate("/admin"); // Redirect to login
+            return;
+        }
+
+        // Construct the updatedFormData with hospital information
+        const updatedFormData = {
+            ...formData,
+            nic,  // Add NIC to associate with the patient
+            hospitalId: user.hospitalId,      // Include hospital ID
+            hospitalName: user.hospitalName   // Include hospital name
+        };
         
         try {
             const response = await fetch(`http://localhost:5555/api/treatment/${nic}`, {
@@ -50,20 +62,22 @@ const TreatmentPlan = ({ formData, setFormData }) => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(updatedFormData), // send full form data
+                body: JSON.stringify(updatedFormData), // send full form data with hospital info
             });
     
             if (response.ok) {
-                alert("Form submitted successfully!");
+                alert("Treatment added successfully!");
                 navigate("/h-patientdetails"); // Redirect after submission
             } else {
-                alert("Failed to submit form.");
+                const errorData = await response.json();
+                alert(`Failed to submit form: ${errorData.message || errorData.error || "Unknown error"}`);
             }
         } catch (error) {
             console.error("Error submitting form:", error);
             alert("An error occurred. Please try again.");
         }
     };
+
     return (
         <div className="flex flex-col h-screen bg-gray-100">
             {/* Top Navigation Bar */}

@@ -9,7 +9,14 @@ export const addTreatment = async (request, response) => {
             ho_admissionDetails,
             medicalHistory,
             treatmentPlan,
+            hospitalId,   // Get hospitalId from request body
+            hospitalName  // Get hospitalName from request body
         } = request.body;
+
+        // Validate required hospital information
+        if (!hospitalId || !hospitalName) {
+            return response.status(400).json({ message: "Hospital ID and name are required" });
+        }
 
         // Step 1: Find the patient using the NIC from the Patient model
         const patient = await Patient.findOne({ nic });
@@ -17,12 +24,14 @@ export const addTreatment = async (request, response) => {
             return response.status(404).json({ message: "Patient not found" });
         }
 
-        // Step 2: Create a new treatment document
+        // Step 2: Create a new treatment document with hospital information
         const newTreatment = new Treatment({
-            patient_nic: nic,  // Link the treatment to the patient using the patient's _id
+            patient_nic: nic,
             ho_admissionDetails,
             medicalHistory,
             treatmentPlan,
+            hospitalId,     // Save the hospital ID
+            hospitalName    // Save the hospital name
         });
 
         // Step 3: Save the treatment document
@@ -35,7 +44,7 @@ export const addTreatment = async (request, response) => {
         });
     } catch (error) {
         console.error("Error adding treatment:", error);
-        res.status(500).json({ message: "Error adding treatment", error: error.message });
+        response.status(500).json({ message: "Error adding treatment", error: error.message });
     }
 };
 
