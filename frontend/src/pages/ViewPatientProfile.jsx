@@ -7,10 +7,13 @@ import { motion } from 'framer-motion';
 
 const ViewPatientProfile = () => {
   const [patient, setPatient] = useState({});
+  const [treatments, setTreatments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [treatmentsLoading, setTreatmentsLoading] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState('Home');
+  
   useEffect(() => {
     setLoading(true);
     axios
@@ -18,12 +21,49 @@ const ViewPatientProfile = () => {
       .then((response) => {
         setPatient(response.data);
         setLoading(false);
+        
+        // Once we have the patient data, fetch their treatments using their NIC
+        if (response.data.nic) {
+          fetchPatientTreatments(response.data.nic);
+        }
       })
       .catch((error) => {
         console.error('Error fetching patient:', error);
         setLoading(false);
       });
   }, [id]);
+  
+  // Fetch all treatments for this patient (from all hospitals)
+  const fetchPatientTreatments = (nic) => {
+    setTreatmentsLoading(true);
+    axios
+      .get(`http://localhost:5555/api/treatment/${nic}`)
+      .then((response) => {
+        setTreatments(response.data);
+        setTreatmentsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching treatments:', error);
+        setTreatmentsLoading(false);
+      });
+  };
+
+  // Function to group treatments by hospital
+  const getTreatmentsByHospital = () => {
+    const groupedTreatments = {};
+    
+    treatments.forEach(treatment => {
+      const hospitalName = treatment.hospitalName || 'Unknown Hospital';
+      
+      if (!groupedTreatments[hospitalName]) {
+        groupedTreatments[hospitalName] = [];
+      }
+      
+      groupedTreatments[hospitalName].push(treatment);
+    });
+    
+    return groupedTreatments;
+  };
 
   const handleEditPatient = () => {
     navigate(`/patient/Edit/${id}`);
@@ -332,6 +372,106 @@ const ViewPatientProfile = () => {
                 </motion.div>
               </div>
             </div>
+
+            {/* Medical Summary Section */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="mt-8 px-8 pb-8"
+            >
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Medical Summary</h3>
+              
+              {treatmentsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Spinner />
+                </div>
+              ) : treatments.length > 0 ? (
+                <div className="space-y-6">
+                  {Object.entries(getTreatmentsByHospital()).map(([hospitalName, hospitalTreatments]) => (
+                    <motion.div 
+                      key={hospitalName}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg overflow-hidden shadow-md"
+                    >
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3">
+                        <h4 className="text-lg font-semibold text-white">
+                          {hospitalName}
+                        </h4>
+                      </div>
+                      
+                      <div className="p-4">
+                        {hospitalTreatments.map((treatment, index) => (
+                          <div key={treatment._id} className={`p-4 ${index > 0 ? 'border-t border-gray-200 mt-4' : ''}`}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <h5 className="font-medium text-gray-700">Admission Details</h5>
+                                <p className="text-sm mt-1">
+                                  <span className="font-medium">Date:</span>{' '}
+                                  {treatment.ho_admissionDetails?.admissionDate
+                                    ? new Date(treatment.ho_admissionDetails.admissionDate).toLocaleDateString()
+                                    : 'N/A'}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Physician:</span>{' '}
+                                  {treatment.ho_admissionDetails?.admittingPhysician?.join(', ') || 'N/A'}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Diagnosis:</span>{' '}
+                                  {treatment.ho_admissionDetails?.primaryDiagnosis?.join(', ') || 'N/A'}
+                                </p>
+                              </div>
+                              
+                              <div>
+                                <h5 className="font-medium text-gray-700">Treatment Plan</h5>
+                                <p className="text-sm mt-1">
+                                  <span className="font-medium">Medications:</span>{' '}
+                                  {treatment.treatmentPlan?.medications?.join(', ') || 'None'}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Lab Tests:</span>{' '}
+                                  {treatment.treatmentPlan?.labTests?.join(', ') || 'None'}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Therapies:</span>{' '}
+                                  {treatment.treatmentPlan?.therapies?.join(', ') || 'None'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-2">
+                              <h5 className="font-medium text-gray-700">Medical History</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                                <p className="text-sm">
+                                  <span className="font-medium">Allergies:</span>{' '}
+                                  {treatment.medicalHistory?.allergies?.join(', ') || 'None'}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Illnesses:</span>{' '}
+                                  {treatment.medicalHistory?.illnesses?.join(', ') || 'None'}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Surgeries:</span>{' '}
+                                  {treatment.medicalHistory?.surgeries?.join(', ') || 'None'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-blue-50 p-6 rounded-lg">
+                  <p className="text-gray-700">
+                    No treatment records available yet. Please consult with your healthcare provider.
+                  </p>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </div>
