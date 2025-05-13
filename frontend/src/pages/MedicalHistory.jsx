@@ -22,10 +22,26 @@ const MedicalHistory = ({ formData, setFormData }) => {
     };
 
     // Handle file selection
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const files = Array.from(e.target.files);
         setSelectedFiles(files);
-        console.log("Selected Files:", files);
+
+        // Convert files to base64
+        const base64Files = await Promise.all(
+            files.map(file => new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            }))
+        );
+
+        setFormData({
+            ...formData,
+            medicalHistory: {
+                ...formData.medicalHistory,
+                su_imaging: base64Files
+            }
+        });
     };
 
     // Handle form submission

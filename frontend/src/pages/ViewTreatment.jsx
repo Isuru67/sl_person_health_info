@@ -3,6 +3,67 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
 
+const ImageModal = ({ image, onClose }) => {
+    return (
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+            onClick={onClose}
+        >
+            <div className="relative max-w-4xl w-full mx-auto">
+                <button
+                    className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-75"
+                    onClick={onClose}
+                >
+                    ×
+                </button>
+                <img
+                    src={image}
+                    alt="Full size"
+                    className="max-w-full max-h-[90vh] object-contain mx-auto rounded-lg"
+                    onClick={(e) => e.stopPropagation()}
+                />
+            </div>
+        </div>
+    );
+};
+
+const ImagePreview = ({ images, title }) => {
+    const [selectedImage, setSelectedImage] = useState(null);
+
+    if (!images || images.length === 0) return <span>No images</span>;
+
+    return (
+        <div className="flex flex-wrap gap-2">
+            {images.map((image, index) => (
+                <div key={index} className="relative group cursor-pointer">
+                    <div 
+                        className="w-24 h-24 relative overflow-hidden rounded-lg border border-gray-200"
+                        onClick={() => setSelectedImage(image)}
+                    >
+                        <img
+                            src={image}
+                            alt={`${title} ${index + 1}`}
+                            className="w-full h-full object-cover transition-transform hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-white text-sm font-medium px-2 py-1 bg-black bg-opacity-50 rounded">
+                                View
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            ))}
+            {selectedImage && (
+                <ImageModal 
+                    image={selectedImage}
+                    onClose={() => setSelectedImage(null)}
+                />
+            )}
+        </div>
+    );
+};
+
 const ViewTreatment = () => {
     const { nic } = useParams();  // Get NIC from URL
     const [treatments, setTreatments] = useState([]);  // Array to hold multiple treatments
@@ -158,7 +219,12 @@ const ViewTreatment = () => {
                                         <td className="px-4 py-2 border">{treatment.medicalHistory?.illnesses?.join(", ") || "None"}</td>
                                         <td className="px-4 py-2 border">{treatment.medicalHistory?.medications?.join(", ") || "None"}</td>
                                         <td className="px-4 py-2 border">{treatment.medicalHistory?.surgeries?.join(", ") || "None"}</td>
-                                        <td className="px-4 py-2 border">{treatment.medicalHistory?.su_imaging?.join(", ") || "None"}</td>
+                                        <td className="px-4 py-2 border">
+                                            <ImagePreview 
+                                                images={treatment.medicalHistory?.su_imaging} 
+                                                title="Surgery Report"
+                                            />
+                                        </td>
                                         <td className="px-4 py-2 border">{treatment.medicalHistory?.immunizations?.join(", ") || "None"}</td>
                                     </tr>
                                 </tbody>
@@ -179,7 +245,12 @@ const ViewTreatment = () => {
                                     <tr>
                                         <td className="px-4 py-2 border">{treatment.treatmentPlan?.medications?.join(", ") || "None"}</td>
                                         <td className="px-4 py-2 border">{treatment.treatmentPlan?.labTests?.join(", ") || "None"}</td>
-                                        <td className="px-4 py-2 border">{treatment.treatmentPlan?.te_imaging?.join(", ") || "None"}</td>
+                                        <td className="px-4 py-2 border">
+                                            <ImagePreview 
+                                                images={treatment.treatmentPlan?.te_imaging} 
+                                                title="Lab Report"
+                                            />
+                                        </td>
                                         <td className="px-4 py-2 border">{treatment.treatmentPlan?.therapies?.join(", ") || "None"}</td>
                                     </tr>
                                 </tbody>

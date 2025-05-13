@@ -5,38 +5,38 @@ import { Treatment } from "../models/hospitalModel.js";
 
 const router = express.Router();
 
-router.post('/treatment/:nic', async (request, response) => {
-    const { nic } = request.params;
-    const { ho_admissionDetails, medicalHistory, treatmentPlan, hospitalId, hospitalName } = request.body;
-
+router.post('/treatment/:nic', async (req, res) => {
     try {
-        // Validate hospital information
-        if (!hospitalId || !hospitalName) {
-            return response.status(400).json({ error: 'Hospital information is required' });
+        const { nic } = req.params;
+        console.log('Received request for NIC:', nic);
+        console.log('Request body:', req.body);
+
+        // Validate request body
+        if (!req.body.ho_admissionDetails || !req.body.medicalHistory || !req.body.treatmentPlan) {
+            return res.status(400).json({ message: 'Missing required data' });
         }
 
-        // Check if the patient exists by NIC
-        const patient = await Patient.findOne({ nic });
-        if (!patient) {
-            return response.status(404).json({ error: 'Patient not found with this NIC' });
-        }
-
-        // Create a new treatment with hospital information
         const newTreatment = new Treatment({
             patient_nic: nic,
-            ho_admissionDetails,
-            medicalHistory,
-            treatmentPlan,
-            hospitalId,
-            hospitalName
+            ho_admissionDetails: req.body.ho_admissionDetails,
+            medicalHistory: req.body.medicalHistory,
+            treatmentPlan: req.body.treatmentPlan,
+            hospitalId: req.body.hospitalId,
+            hospitalName: req.body.hospitalName
         });
 
-        await newTreatment.save();
-
-        return response.status(201).json({ message: 'Treatment added successfully', treatment: newTreatment });
+        const savedTreatment = await newTreatment.save();
+        
+        res.status(201).json({
+            message: 'Treatment added successfully',
+            treatment: savedTreatment
+        });
     } catch (error) {
-        console.error('Error while adding treatment:', error);
-        return response.status(500).json({ error: 'Internal Server Error' });
+        console.error('Server error:', error);
+        res.status(500).json({
+            message: 'Error adding treatment',
+            error: error.message
+        });
     }
 });
 

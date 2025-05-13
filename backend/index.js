@@ -16,7 +16,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 //Middleware for parsing request body
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 //Middleware for handling CORS policy
 //Option 1: Allow all origins with default of cors(*)
