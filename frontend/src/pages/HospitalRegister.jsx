@@ -214,7 +214,7 @@ const HospitalRegister = () => {
 
   const handleClosePopup = () => {
     setShowSuccessPopup(false);
-    navigate('/login'); // Redirect to login page after closing popup
+    navigate('/admin'); // Redirect to login page after closing popup
   };
 
   return (
