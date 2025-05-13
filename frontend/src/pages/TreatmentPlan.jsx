@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import DualNavbar from "../components/layout";
 import { useParams } from "react-router-dom";
+import axios from "axios";
 
 const TreatmentPlan = ({ formData, setFormData }) => {
     const navigate = useNavigate();
@@ -28,53 +29,85 @@ const TreatmentPlan = ({ formData, setFormData }) => {
     };
 
     // Handle file selection
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const files = Array.from(e.target.files);
         setSelectedFiles(files);
-        console.log("Selected Files:", files);
+
+        // Convert files to base64
+        const base64Files = await Promise.all(
+            files.map(file => new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            }))
+        );
+
+        setFormData({
+            ...formData,
+            treatmentPlan: {
+                ...formData.treatmentPlan,
+                te_imaging: base64Files
+            }
+        });
     };
 
     // **Submit the entire form data to the database**
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Get hospital info from localStorage
-        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('userInfo') || '{}');
-        
-        // Ensure we have hospital information
-        if (!user.hospitalId || !user.hospitalName) {
-            alert("Hospital information is missing. Please log in again.");
-            navigate("/admin"); // Redirect to login
-            return;
-        }
-
-        // Construct the updatedFormData with hospital information
-        const updatedFormData = {
-            ...formData,
-            nic,  // Add NIC to associate with the patient
-            hospitalId: user.hospitalId,      // Include hospital ID
-            hospitalName: user.hospitalName   // Include hospital name
-        };
-        
         try {
-            const response = await fetch(`http://localhost:5555/api/treatment/${nic}`, {
-                method: "POST",
+            // Get hospital info
+            const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('userInfo') || '{}');
+            
+            if (!user.hospitalId || !user.hospitalName) {
+                alert("Hospital information is missing. Please log in again.");
+                navigate("/admin");
+                return;
+            }
+
+            // Verify all required data is present
+            if (!formData.ho_admissionDetails || !formData.medicalHistory || !formData.treatmentPlan) {
+                alert("Please fill in all required information");
+                return;
+            }
+
+            const updatedFormData = {
+                ho_admissionDetails: formData.ho_admissionDetails,
+                medicalHistory: formData.medicalHistory,
+                treatmentPlan: formData.treatmentPlan,
+                hospitalId: user.hospitalId,
+                hospitalName: user.hospitalName
+            };
+
+            console.log('Sending treatment data:', updatedFormData);
+
+            const response = await axios({
+                method: 'post',
+                url: `http://localhost:5555/api/treatment/${nic}`,
+                data: updatedFormData,
                 headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(updatedFormData), // send full form data with hospital info
+                    'Content-Type': 'application/json'
+                }
             });
-    
-            if (response.ok) {
+
+            if (response.status === 201) {
                 alert("Treatment added successfully!");
-                navigate("/h-patientdetails"); // Redirect after submission
-            } else {
-                const errorData = await response.json();
-                alert(`Failed to submit form: ${errorData.message || errorData.error || "Unknown error"}`);
+                navigate("/h-patientdetails");
             }
         } catch (error) {
-            console.error("Error submitting form:", error);
-            alert("An error occurred. Please try again.");
+            if (error.response) {
+                // Server responded with error
+                console.error('Server error:', error.response.data);
+                alert(`Server error: ${error.response.data.message}`);
+            } else if (error.request) {
+                // No response received
+                console.error('Network error:', error.request);
+                alert("Server not responding. Please try again later.");
+            } else {
+                // Error in request setup
+                console.error('Request error:', error.message);
+                alert("Error setting up request. Please try again.");
+            }
         }
     };
 

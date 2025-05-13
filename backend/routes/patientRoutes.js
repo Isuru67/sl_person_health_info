@@ -172,6 +172,28 @@ router.put("/:id", upload.single('pic'), async (request, response) => {
   }
 });
 
+// Update route to use NIC instead of _id
+router.put('/patient/:nic', async (req, res) => {
+    try {
+        const patient = await Patient.findOne({ nic: req.params.nic });
+        
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+
+        const updatedPatient = await Patient.findOneAndUpdate(
+            { nic: req.params.nic },
+            req.body,
+            { new: true }
+        );
+
+        return res.status(200).json(updatedPatient);
+    } catch (error) {
+        console.error('Error while updating patient:', error);
+        return res.status(500).json({ message: 'Error updating patient', error: error.message });
+    }
+});
+
 // Delete Patient Route
 router.delete("/:id", async (request, response) => {
   try {

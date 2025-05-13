@@ -41,24 +41,17 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
         e.preventDefault();
 
         try {
-            const response = await fetch(`http://localhost:5555/patient/${nic}`, {
-                method: "PUT", // Use PUT for updating patient details
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    ho_admissionDetails: formData.ho_admissionDetails,
-                }),
-            });
+            // Save admission details to formData state
+            console.log("Sending data:", formData.ho_admissionDetails);
 
-            const result = await response.json();
-            console.log("Updated successfully:", result);
-
-            
+            // No need to make API call here - just navigate to next page
+            // The data will be submitted together with medical history and treatment plan
+            if (!error) { // Only proceed if there are no validation errors
                 navigate(`/h-patientdetails/medical-history/${nic}`);
-            
+            }
         } catch (error) {
-            console.error("Failed to update data:", error);
+            console.error("Navigation error:", error);
+            alert("Something went wrong. Please try again.");
         }
     };
 
@@ -135,7 +128,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
 
                     <div className="flex justify-between mt-4">
                         <motion.button
-                            whileHover={{ scale: 1.03, backgroundColor: "rgba(75, 85, 99, 0.9)" }}
+                            whileHover={{ scale: 1.03, backgroundColor: "rgba(59, 75, 98, 0.72)" }}
                             whileTap={{ scale: 0.98 }}
                             transition={{ type: "spring", stiffness: 400 }}
                             className="px-4 py-2 rounded-lg bg-gray-500 text-white font-bold shadow-lg"
