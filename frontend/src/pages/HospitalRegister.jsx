@@ -44,7 +44,7 @@ const HospitalRegister = () => {
   const [activeNav, setActiveNav] = useState('Register');
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
-  const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
+  const navItems = ['Home', 'Features', 'About Us', 'Contact'];
 
   // Validation Functions
   const validateHospitalName = (name) => {

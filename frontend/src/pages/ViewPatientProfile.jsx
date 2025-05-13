@@ -73,7 +73,7 @@ const ViewPatientProfile = () => {
       boxShadow: "0 2px 5px rgba(0,0,0,0.2)"
     }
   };
-  const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
+  const navItems = ['Home', 'Features', 'About Us', 'Contact'];
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
