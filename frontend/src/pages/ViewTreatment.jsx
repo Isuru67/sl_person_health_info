@@ -49,7 +49,12 @@ const ViewTreatment = () => {
                 {treatments.length > 0 ? (
                     treatments.map((treatment) => (
                         <div key={treatment._id} className="bg-white p-6 rounded-lg shadow-lg max-w-full mx-auto mb-6">
-                            <h3 className="text-xl font-semibold mb-4">Treatment Record for NIC: {treatment.patient_nic}</h3>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-semibold">Treatment Record for NIC: {treatment.patient_nic}</h3>
+                                <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                    Added by: {treatment.hospitalName || "Unknown Hospital"}
+                                </div>
+                            </div>
 
                             {/* Admission Details Table */}
                             <table className="min-w-full table-auto text-left text-sm mb-4">

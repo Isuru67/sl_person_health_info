@@ -1,26 +1,38 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-
 import Spinner from "../components/Spinner";
+import DualNavbar from "../components/layout";
 
 const H_PatientDetails = () => {
+    const { hospitalName } = useParams(); // Get hospital name from URL
     const [patients, setPatients] = useState([]);
     const [searchNIC, setSearchNIC] = useState("");
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeNav, setActiveNav] = useState("Patients");
+    const [hospitalInfo, setHospitalInfo] = useState({});
     const navigate = useNavigate();
 
-    const [currentUser] = useState({
-        name: "John Doe",
-        role: "Asiri Hospital Admin",
-        avatar: "https://randomuser.me/api/portraits/men/1.jpg"
-    });
-
     useEffect(() => {
+        // Get hospital info from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('userInfo') || '{}');
+        setHospitalInfo(user);
+        
+        // If we have hospital info but no hospitalName in URL, redirect to include it
+        if (user.hospitalName && !hospitalName) {
+            const urlFriendlyName = user.hospitalName
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '')  // Remove special characters
+                .replace(/\s+/g, '-');     // Replace spaces with dashes
+            
+            navigate(`/${urlFriendlyName}/h-patientdetails`, { replace: true });
+            return;
+        }
+        
+        // Fetch patients data
         axios.get("http://localhost:5555/patient/")
             .then((res) => {
                 console.log("API Response:", res.data);
@@ -31,7 +43,7 @@ const H_PatientDetails = () => {
                 console.error("Error fetching patients:", error);
                 setLoading(false);
             });
-    }, []);
+    }, [hospitalName, navigate]);
 
     const handleSearch = async () => {
         try {
@@ -41,6 +53,14 @@ const H_PatientDetails = () => {
             alert("Patient not found");
             setSelectedPatient(null);
         }
+    };
+
+    // Helper function to maintain hospital name in URLs
+    const getPathWithHospital = (path) => {
+        if (hospitalName) {
+            return `/${hospitalName}${path}`;
+        }
+        return path;
     };
 
     const navItem = {
@@ -77,71 +97,8 @@ const H_PatientDetails = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
-            {/* Header */}
-            <motion.header 
-                initial={{ y: -100 }}
-                animate={{ y: 0 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                className="fixed top-0 left-0 w-full z-50 bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg"
-            >
-                <div className="container mx-auto px-4 py-3">
-                    <div className="flex justify-between items-center">
-                        <motion.div
-                            whileHover={{ rotate: [0, -10, 10, 0] }}
-                            transition={{ duration: 0.5 }}
-                            className="flex items-center"
-                        >
-                            <motion.span 
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.2, type: "spring" }}
-                                className="text-2xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-400"
-                            >
-                                HealthCare HIMS
-                            </motion.span>
-                        </motion.div>
-
-                        <nav className="hidden md:flex space-x-2 mx-auto">
-                            {navItems.map((item, i) => (
-                                <motion.div
-                                    key={item}
-                                    custom={i}
-                                    initial="hidden"
-                                    animate="visible"
-                                    whileHover="hover"
-                                    whileTap="tap"
-                                    variants={navItem}
-                                    onClick={() => setActiveNav(item)}
-                                    className={`px-4 py-2 rounded-full cursor-pointer ${activeNav === item ? 
-                                        'bg-white text-purple-600 font-bold' : 
-                                        'text-white hover:bg-white/20'}`}
-                                >
-                                    {item}
-                                </motion.div>
-                            ))}
-                        </nav>
-
-                        <div className="ml-auto">
-                            <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                className="flex items-center space-x-3 bg-white/20 rounded-full pl-4 pr-1 py-1 cursor-pointer"
-                            >
-                                <div className="text-white text-right">
-                                    <p className="font-medium text-sm">{currentUser.name}</p>
-                                    <p className="text-xs opacity-80">{currentUser.role}</p>
-                                </div>
-                                <motion.img
-                                    whileHover={{ rotate: [0, 10, -10, 0] }}
-                                    transition={{ duration: 0.5 }}
-                                    src={currentUser.avatar}
-                                    alt="User Avatar"
-                                    className="w-10 h-10 rounded-full border-2 border-white"
-                                />
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
-            </motion.header>
+            {/* Use DualNavbar component which now shows logged-in hospital info */}
+            <DualNavbar />
 
             {/* Main Content */}
             <div className="pt-24 pb-12 px-4 container mx-auto">
@@ -151,7 +108,7 @@ const H_PatientDetails = () => {
                     transition={{ duration: 0.4 }}
                     className="text-3xl font-bold text-center text-gray-800 mb-8"
                 >
-                    Hospital Patient Details
+                    {hospitalInfo.hospitalName || "Hospital"} Patient Details
                 </motion.h1>
 
                 {/* Search */}
@@ -220,7 +177,7 @@ const H_PatientDetails = () => {
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
-                                            onClick={() => navigate(`/h-patientdetails/ho-admission/${selectedPatient.nic}`)}
+                                            onClick={() => navigate(getPathWithHospital(`/h-patientdetails/ho-admission/${selectedPatient.nic}`))}
                                             className="px-6 py-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium shadow-md"
                                         >
                                             Add Treatment
@@ -228,7 +185,7 @@ const H_PatientDetails = () => {
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
-                                            onClick={() => navigate(`/h-patientdetails/view/${selectedPatient.nic}`)}
+                                            onClick={() => navigate(getPathWithHospital(`/h-patientdetails/view/${selectedPatient.nic}`))}
                                             className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-md"
                                         >
                                             View Treatments
