@@ -209,15 +209,6 @@ const ViewPatientProfile = () => {
 
       {/* Main Content Area */}
       <div className="pt-24 pb-12 px-4 container mx-auto">
-        {/* BackButton positioned perfectly in left corner */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute left-6 top-20 z-40"
-        >
-          <BackButton className="text-gray-700 hover:text-indigo-600" />
-        </motion.div>
         <motion.h1 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
