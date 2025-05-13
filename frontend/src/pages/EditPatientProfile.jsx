@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
 import { motion } from 'framer-motion';
+import { MdLogout } from "react-icons/md"; // Import logout icon
 
 const EditPatientProfile = () => {
   const [patient, setPatient] = useState({
@@ -93,6 +94,17 @@ const EditPatientProfile = () => {
       });
   };
 
+  // Add logout function
+  const handleLogout = () => {
+    // Clear all user data from localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
+    
+    // Redirect to login page
+    navigate('/admin');
+  };
+
   // Animation variants
   const navItem = {
     hidden: { y: -20, opacity: 0 },
@@ -179,6 +191,19 @@ const EditPatientProfile = () => {
               >
                 {patient.name || 'Edit Patient'}
               </motion.div>
+              
+              {/* Logout Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center text-white hover:text-red-200 transition-colors"
+                title="Logout"
+              >
+                <MdLogout className="text-xl mr-1" />
+                <span className="hidden md:inline">Logout</span>
+              </motion.button>
+              
               {patient.pic && (
                 <motion.img
                   whileHover={{ scale: 1.1 }}
