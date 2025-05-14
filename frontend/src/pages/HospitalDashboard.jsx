@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
 // Add missing icon imports
-import { FaUsers, FaFileAlt, FaUserMd } from "react-icons/fa";
+import { FaUsers, FaFileAlt, FaUserMd, FaClock } from "react-icons/fa";
 
 const HospitalDashboard = () => {
   const { hospitalName } = useParams(); // Get hospital name from URL
@@ -33,24 +33,69 @@ const HospitalDashboard = () => {
         navigate(`/hospitaldashboard/${urlFriendlyName}`, { replace: true });
       }
       
-      // Fetch some mock statistics (would be replaced with real API calls)
-      // In a real app, you'd fetch this data from your backend
-      setStats({
-        totalPatients: Math.floor(Math.random() * 100),
-        activeTreatments: Math.floor(Math.random() * 50),
-        pendingReports: Math.floor(Math.random() * 20)
-      });
+      // Only fetch stats if the hospital is approved
+      if (user.status === 'approved') {
+        // Fetch some mock statistics (would be replaced with real API calls)
+        // In a real app, you'd fetch this data from your backend
+        setStats({
+          totalPatients: Math.floor(Math.random() * 100),
+          activeTreatments: Math.floor(Math.random() * 50),
+          pendingReports: Math.floor(Math.random() * 20)
+        });
+      }
     } else {
       // If no user info is found, redirect to login
       navigate('/admin');
     }
   }, [hospitalName, navigate]);
   
-  return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      {/* Top Navigation Bar */}
-      <DualNavbar />
-      
+  // Render pending status view
+  const renderPendingView = () => {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-center mb-6">
+            <FaClock className="text-yellow-500 text-4xl mr-3" />
+            <h2 className="text-2xl font-bold text-gray-800">
+              Your Hospital Registration is Pending Approval
+            </h2>
+          </div>
+          
+          <p className="text-gray-600 text-center mb-6">
+            Your registration is currently under review by our administrators. 
+            Once approved, you'll have access to all dashboard features.
+          </p>
+          
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm font-semibold text-gray-500">HOSPITAL ID</p>
+                <p className="text-lg font-medium">{hospitalInfo.hospitalId || "N/A"}</p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm font-semibold text-gray-500">EMAIL</p>
+                <p className="text-lg font-medium">{hospitalInfo.email || "N/A"}</p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm font-semibold text-gray-500">STATUS</p>
+                <p className="text-lg font-medium">
+                  <span className="inline-block px-2 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
+                    Pending
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Render approved status view (full dashboard)
+  const renderApprovedView = () => {
+    return (
       <div className="container mx-auto px-6 py-8">
         <div className="bg-white shadow-md rounded-lg p-6 mb-6">
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
@@ -147,6 +192,16 @@ const HospitalDashboard = () => {
           </div>
         </div>
       </div>
+    );
+  };
+  
+  return (
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Top Navigation Bar */}
+      <DualNavbar />
+      
+      {/* Conditional rendering based on hospital status */}
+      {hospitalInfo.status === 'pending' ? renderPendingView() : renderApprovedView()}
     </div>
   );
 };
