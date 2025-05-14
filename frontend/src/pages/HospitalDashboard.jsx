@@ -109,7 +109,7 @@ const HospitalDashboard = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Message */}
-        <div className="bg-gradient-to-r from-blue-400 to-indigo-400 rounded-2xl shadow-xl  p-6 mb-4">
+        <div className="bg-gradient-to-r from-blue-400 to-indigo-400 rounded-2xl shadow-xl p-6 mb-4">
           <h2 className="text-3xl font-bold text-black mb-2">
             Welcome back, {hospitalInfo.hospitalName}
           </h2>
@@ -153,7 +153,6 @@ const HospitalDashboard = () => {
             title="View Reports"
             description="Access treatment reports"
             icon={<FiTrendingUp />}
-           
           />
           <QuickActionCard
             title="Patient Records"
@@ -170,7 +169,7 @@ const HospitalDashboard = () => {
       </div>
     );
   };
-
+  
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       {/* Top Navigation Bar */}

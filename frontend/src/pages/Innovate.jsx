@@ -1,8 +1,48 @@
-import React, { useState } from "react";
-// eslint-disable-next-line no-unused-vars
+import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
-import { User, Bell, Activity } from 'lucide-react';
+import { User, Bell, Activity, File, FileText, AlertTriangle, Download } from 'lucide-react';
 import axios from "axios";
+import * as pdfjsLib from 'pdfjs-dist';
+import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
+import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+// Register ChartJS components (add this before the Innovate function)
+ChartJS.register(
+    ArcElement,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
+
+// Get the PDF.js version and set up the worker
+const setupPdfWorker = () => {
+  const pdfVersion = pdfjsLib.version;
+  console.log(`Using PDF.js version: ${pdfVersion}`);
+  
+  // Try to load the worker script directly from your node_modules (Vite/Webpack should handle this)
+  try {
+    // For Vite, we need to use the import.meta.url approach
+    const workerUrl = new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url);
+    console.log("Attempting to load PDF worker from:", workerUrl.toString());
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+  } catch (err) {
+    console.warn("Failed to load worker directly, falling back to alternatives:", err);
+    
+    // For specific versions like 5.2.133, we might need to adjust the path pattern
+    if (pdfVersion === "5.2.133") {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/build/pdf.worker.mjs';
+    } else {
+      // Try CDN as last resort
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfVersion}/pdf.worker.min.js`;
+    }
+  }
+};
+
+setupPdfWorker();
 
 function Innovate() {
     const [age, setAge] = useState("");
@@ -12,8 +52,13 @@ function Innovate() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [activeNav, setActiveNav] = useState('Features');
+    const [uploadedFile, setUploadedFile] = useState(null);
+    const [pdfContent, setPdfContent] = useState(""); // Store extracted PDF content
+    const [pdfProcessingStatus, setPdfProcessingStatus] = useState(""); // To show PDF processing status
+    const [chartData, setChartData] = useState(null);
+    const [chartType, setChartType] = useState('pie');
+    const [ageError, setAgeError] = useState("");
 
-    // Navigation animation variants
     const navItem = {
         hidden: { y: -20, opacity: 0 },
         visible: (i) => ({
@@ -35,31 +80,292 @@ function Innovate() {
 
     const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
 
+    // Enhanced function to extract text from PDF with OCR-like capabilities
+    const extractTextFromPDF = async (file) => {
+        try {
+            // Display a loading message in the UI
+            setPdfProcessingStatus("Starting PDF processing...");
+            setPdfContent("Processing PDF, please wait...");
+            
+            // First, let's see if PDF.js is properly initialized
+            if (!pdfjsLib.getDocument) {
+                throw new Error("PDF.js library is not properly initialized");
+            }
+            
+            // Simple text extraction as fallback if we encounter issues
+            const useFallbackMethod = async () => {
+                console.log("Using fallback text extraction method");
+                setPdfProcessingStatus("Using alternative extraction method...");
+                
+                // For basic text extraction, we'll use FileReader API
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        // This will get some text but won't be perfect
+                        const text = e.target.result;
+                        resolve(`Basic text extraction (may be incomplete):\n\n${text}`);
+                    };
+                    reader.onerror = () => {
+                        resolve("Error: Could not read the PDF file using fallback method.");
+                    };
+                    reader.readAsText(file);
+                });
+            };
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                
+                // Set timeout for PDF loading
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("PDF loading timed out after 15 seconds")), 15000);
+                });
+                
+                // Add progress monitoring
+                loadingTask.onProgress = ({ loaded, total }) => {
+                    const progress = total ? Math.round((loaded / total) * 100) : 'unknown';
+                    setPdfProcessingStatus(`Loading PDF: ${progress}% complete`);
+                };
+                
+                // Race between loading and timeout
+                const pdf = await Promise.race([loadingTask.promise, timeoutPromise]);
+                setPdfProcessingStatus(`PDF loaded with ${pdf.numPages} pages. Beginning text extraction...`);
+                
+                let text = `PDF Loaded: ${pdf.numPages} pages\n\n`;
+                let textLayerFound = false;
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    setPdfProcessingStatus(`Extracting text from page ${pageNum}/${pdf.numPages}...`);
+                    const page = await pdf.getPage(pageNum);
+
+                    // Standard text extraction
+                    try {
+                        const textContent = await page.getTextContent();
+                        
+                        // Check if this page has actual text content
+                        if (textContent.items && textContent.items.length > 0) {
+                            textLayerFound = true;
+                            const pageText = textContent.items.map(item => item.str).join(" ");
+                            text += `Page ${pageNum}: ${pageText}\n\n`;
+                        } else {
+                            text += `Page ${pageNum}: [No selectable text found - using image processing]\n\n`;
+                            
+                            // For non-selectable text, we'll try to process as image
+                            try {
+                                setPdfProcessingStatus(`Page ${pageNum} has no selectable text. Extracting as image...`);
+                                
+                                // Get viewport and prepare canvas
+                                const viewport = page.getViewport({ scale: 1.5 }); // Higher scale for better OCR
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                
+                                // Render PDF page to canvas
+                                await page.render({
+                                    canvasContext: context,
+                                    viewport: viewport
+                                }).promise;
+                                
+                                text += `[Image-based content detected on page ${pageNum}. In production, this would be sent to an OCR service like Tesseract.js or Google Vision API for text extraction.]\n\n`;
+                            } catch (renderErr) {
+                                console.warn(`Failed to render page ${pageNum} as image:`, renderErr);
+                                text += `[Failed to process page ${pageNum} as image: ${renderErr.message}]\n\n`;
+                            }
+                        }
+                    } catch (textErr) {
+                        console.warn(`Failed to extract text from page ${pageNum}:`, textErr);
+                        text += `[Error extracting text from page ${pageNum}: ${textErr.message}]\n\n`;
+                    }
+
+                    // Extract clickable text (hyperlinks) from annotations
+                    try {
+                        const annotations = await page.getAnnotations();
+                        if (annotations && annotations.length > 0) {
+                            let linksFound = false;
+                            annotations.forEach(annotation => {
+                                if (annotation.subtype === 'Link' && annotation.url) {
+                                    if (!linksFound) {
+                                        text += `Links on page ${pageNum}:\n`;
+                                        linksFound = true;
+                                    }
+                                    text += `- ${annotation.url} (${annotation.title || 'No title'})\n`;
+                                }
+                            });
+                            if (linksFound) text += "\n";
+                        }
+                    } catch (annotationErr) {
+                        console.warn(`Could not extract annotations from page ${pageNum}:`, annotationErr);
+                    }
+                }
+
+                if (!textLayerFound) {
+                    text += "\nNote: This PDF appears to contain mostly image-based or scanned content. To fully extract text from this document, consider using a dedicated OCR service.\n";
+                }
+
+                setPdfProcessingStatus("PDF processing complete!");
+                return text;
+                
+            } catch (pdfError) {
+                console.error("PDF.js extraction error:", pdfError);
+                
+                // Check if it's a version mismatch error
+                if (pdfError.message && pdfError.message.includes("version")) {
+                    console.warn("Version mismatch detected, using fallback extraction");
+                    return await useFallbackMethod();
+                }
+                
+                throw pdfError;
+            }
+        } catch (err) {
+            console.error("Error extracting PDF text:", err);
+            const errorMessage = `Failed to process PDF: ${err.message || 'Unknown error'}`;
+            setError(errorMessage);
+            setPdfProcessingStatus("PDF processing failed!");
+            return `Error: ${errorMessage}`;
+        }
+    };
+
+    // Handle file upload and extract PDF content
+    const handleFileUpload = async (e) => {
+        setError(""); // Clear any previous errors
+        const file = e.target.files[0];
+        
+        if (!file) {
+            return; // No file selected
+        }
+        
+        if (file.type === "application/pdf") {
+            try {
+                setUploadedFile(file);
+                setIsLoading(true); // Show loading state
+                
+                // Update UI to show we're processing
+                setPdfContent(`Processing ${file.name}...`);
+                setPdfProcessingStatus(`Starting to process ${file.name}...`);
+                
+                const extractedText = await extractTextFromPDF(file);
+                setPdfContent(extractedText);
+                
+                if (extractedText.startsWith("Error:")) {
+                    setError(`Failed to process PDF: ${extractedText.substring(7)}`);
+                }
+            } catch (err) {
+                console.error("File upload error:", err);
+                setError(`Error processing file: ${err.message || "Unknown error"}`);
+                setPdfContent("");
+                setPdfProcessingStatus("PDF processing failed!");
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            setError("Please upload a valid PDF file (.pdf extension).");
+            setUploadedFile(null);
+            setPdfContent("");
+            setPdfProcessingStatus("");
+        }
+    };
+
+    // Update the parseRiskPercentages function to improve parsing accuracy
+    const parseRiskPercentages = (result) => {
+        if (!result) return null;
+
+        const percentages = [];
+        const conditions = [];
+        const regex = /\[(.*?)\]\s*-\s*(\d+)%/g;
+        let match;
+
+        while ((match = regex.exec(result)) !== null) {
+            conditions.push(match[1].trim());
+            percentages.push(parseInt(match[2]));
+        }
+
+        if (conditions.length === 0) return null;
+
+        return {
+            labels: conditions,
+            datasets: [{
+                label: 'Risk Probability (%)',
+                data: percentages,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                ],
+                borderWidth: 1,
+            }]
+        };
+    };
+
+    // Modify handleSubmit to include chart data parsing
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError("");
         setResult(null);
 
-        // Validate inputs
-        if (!age || !symptoms) {
-            setError("Please fill in all fields.");
+        // Add age validation
+        if (age) {
+            const ageNum = parseInt(age);
+            if (ageNum < 0 || ageNum > 130 || !Number.isInteger(parseFloat(age))) {
+                setError("Please enter a valid age (0-130 years)");
+                setIsLoading(false);
+                return;
+            }
+        }
+
+        // Check if PDF is uploaded, if not, require fields
+        if (!uploadedFile && (!age || !symptoms)) {
+            setError("Please fill in all fields or upload a PDF.");
             setIsLoading(false);
             return;
         }
 
-        // Format the input as a readable prompt for the backend
-        const symptomList = symptoms.split(",").map(s => s.trim()).join(", ");
-        const prompt = `The patient is ${age} years old, gender is ${sex}. They have the following symptoms: ${symptomList}. What possible health conditions or risks might they face in the future?`;
+        // If we have a PDF but no other info, that's okay
+        let prompt = "";
+        
+        // Include patient details if provided
+        //comment
+        if (age || symptoms) {
+            const symptomList = symptoms ? symptoms.split(",").map(s => s.trim()).join(", ") : "No symptoms specified";
+            prompt = `The patient is ${age || "age not provided"} years old, gender is ${sex}. `;
+            
+            if (symptoms) {
+                prompt += `They have the following symptoms: ${symptomList}. `;
+            }
+        }
+
+        // Include PDF content in the prompt if available
+        if (pdfContent) {
+            prompt += `Here is the patient's medical record from the uploaded PDF:\n${pdfContent}\n`;
+        }
+
+        prompt += "\nWhat possible health conditions or risks might they face in the future? and tell me the possible treatment for them.also tell what probability of having these conditions? probability should be in percentage.";
 
         try {
             const response = await axios.post("http://localhost:5555/ino/analyze", {
                 prompt
             });
 
-            // Extract the answer from the backend response
             const answer = response.data.answer;
             setResult(answer);
+            
+            // Parse and set chart data
+            const parsedChartData = parseRiskPercentages(answer);
+            if (parsedChartData) {
+                setChartData(parsedChartData);
+            }
         } catch (error) {
             console.error("Error analyzing health:", error);
             setError("An error occurred while processing your request. Please try again.");
@@ -68,9 +374,199 @@ function Innovate() {
         }
     };
 
+    // Update the chart options for better visualization
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                }
+            },
+            title: {
+                display: true,
+                text: 'Health Risk Probabilities',
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                },
+                padding: 20
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `Risk: ${context.parsed}%`
+                }
+            }
+        },
+        ...(chartType === 'bar' && {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Probability (%)'
+                    }
+                }
+            }
+        })
+    };
+
+    // Updated downloadReportAsPDF function
+    const downloadReportAsPDF = () => {
+        const doc = new jsPDF();
+        let yOffset = 10;
+
+        // Title
+        doc.setFontSize(18);
+        doc.text("Health Analysis Report", 10, yOffset);
+        yOffset += 10;
+
+        // Patient Details Section
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Patient Details", 10, yOffset);
+        yOffset += 5;
+        doc.setFont("helvetica", "normal");
+        doc.text(`Age: ${age || "Not provided"}`, 10, yOffset);
+        yOffset += 5;
+        doc.text(`Gender: ${sex}`, 10, yOffset);
+        yOffset += 5;
+        if (symptoms) {
+            doc.text(`Symptoms: ${symptoms}`, 10, yOffset);
+            yOffset += 5;
+        }
+
+        // Report Generated Section
+        yOffset += 5;
+        doc.setFont("helvetica", "bold");
+        doc.text("Report Generated", 10, yOffset);
+        yOffset += 5;
+        doc.setFont("helvetica", "normal");
+        doc.text(new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }), 10, yOffset);
+        yOffset += 5;
+        if (uploadedFile) {
+            doc.text(`PDF: ${uploadedFile.name}`, 10, yOffset);
+            yOffset += 5;
+        }
+
+        // Analysis Results Section
+        yOffset += 5;
+        doc.setFont("helvetica", "bold");
+        doc.text("Analysis Results", 10, yOffset);
+        yOffset += 5;
+        doc.setFont("helvetica", "normal");
+
+        // Split the result into lines and handle page overflow
+        const lines = doc.splitTextToSize(result, 180);
+        for (let i = 0; i < lines.length; i++) {
+            if (yOffset > 270) {
+                doc.addPage();
+                yOffset = 10;
+            }
+            doc.text(lines[i], 10, yOffset);
+            yOffset += 5;
+        }
+
+        // Add Chart Section
+        if (chartData) {
+            doc.addPage();
+            doc.setFont("helvetica", "bold");
+            doc.text("Risk Analysis Visualization", 10, 20);
+            doc.setFont("helvetica", "normal");
+
+            // Get the canvas element containing the chart
+            const chartElement = document.querySelector('canvas');
+            if (chartElement) {
+                // Convert the chart to an image
+                const chartImage = chartElement.toDataURL('image/png');
+                
+                // Calculate dimensions to maintain aspect ratio
+                const imgWidth = 190; // Max width for the page
+                const imgHeight = (chartElement.height * imgWidth) / chartElement.width;
+                
+                // Add the chart image to the PDF
+                doc.addImage(chartImage, 'PNG', 10, 30, imgWidth, imgHeight);
+
+                // Add legend below the chart
+                let legendY = 30 + imgHeight + 10;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text("Risk Percentages:", 10, legendY);
+                legendY += 5;
+                doc.setFont("helvetica", "normal");
+
+                // Add the risk percentages as text
+                chartData.labels.forEach((label, index) => {
+                    if (legendY > 270) {
+                        doc.addPage();
+                        legendY = 20;
+                    }
+                    const percentage = chartData.datasets[0].data[index];
+                    doc.text(`${label}: ${percentage}%`, 10, legendY);
+                    legendY += 5;
+                });
+            }
+        }
+
+        // Download the PDF
+        doc.save("Health_Analysis_Report.pdf");
+    };
+
+    // Add this helper function to format the analysis results
+const formatAnalysisResults = (result) => {
+    if (!result) return null;
+    
+    const sections = result.split(/\d+\./).filter(Boolean);
+    return sections.map(section => section.trim());
+};
+
+    // Update the age validation handler
+    const handleAgeChange = (e) => {
+        const value = e.target.value;
+        if (value < 0) {
+            setAgeError("Age cannot be negative");
+            setAge("");
+        } else if (value > 130) {
+            setAgeError("Age cannot exceed 130 years");
+            setAge("");
+        } else {
+            setAgeError("");
+            setAge(value);
+        }
+    };
+
+    // Add this helper function near the other helper functions
+    const parsePrimaryDisease = (result) => {
+        if (!result) return null;
+        
+        const primaryDiseaseMatch = result.match(/Primary Disease:(.*?)(?=Current Conditions:|$)/s);
+        if (!primaryDiseaseMatch) return null;
+
+        const primaryDiseaseParts = primaryDiseaseMatch[1].split('Associated Symptoms:');
+        const disease = primaryDiseaseParts[0].trim();
+        const symptoms = primaryDiseaseParts[1]
+            ?.split('-')
+            .filter(Boolean)
+            .map(symptom => symptom.trim());
+
+        return {
+            disease,
+            symptoms
+        };
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-white">
-            {/* Navigation Bar - Unchanged */}
+            {/* Navigation Bar */}
             <motion.header
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
@@ -111,8 +607,6 @@ function Innovate() {
                                     {item}
                                 </motion.div>
                             ))}
-                            
-                            {/* Profile and Notification Icons */}
                             <div className="flex items-center space-x-4 ml-4">
                                 <motion.div
                                     whileHover={{ scale: 1.2 }}
@@ -141,12 +635,12 @@ function Innovate() {
                 </div>
             </motion.header>
 
-            {/* Main Content with Professional Horizontal Layout */}
+            {/* Main Content */}
             <div className="min-h-screen bg-white flex items-center justify-center p-4 mt-16">
                 <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Input Section - Left Side */}
+                    {/* Input Section */}
                     <div className="lg:col-span-1">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5 }}
@@ -160,19 +654,76 @@ function Innovate() {
                                     Health Risk Analysis
                                 </h1>
                             </div>
-                            
+
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                {/* File Upload Section - Moved to top */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Age
+                                        Upload Medical Report
+                                    </label>
+                                    <div className="flex items-center space-x-3">
+                                        <label className="cursor-pointer inline-flex items-center px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 text-blue-700">
+                                            <File className="mr-2" size={16} />
+                                            <span>{uploadedFile ? "Change File" : "Upload PDF File"}</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="application/pdf"
+                                                onChange={handleFileUpload}
+                                            />
+                                        </label>
+                                        {uploadedFile && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setUploadedFile(null);
+                                                    setPdfContent("");
+                                                    setPdfProcessingStatus("");
+                                                }}
+                                                className="text-red-500 text-sm hover:underline"
+                                            >
+                                                Remove ×
+                                            </button>
+                                        )}
+                                    </div>
+                                    {uploadedFile && (
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-500">
+                                                Selected: {uploadedFile.name}
+                                            </p>
+                                            {pdfProcessingStatus && (
+                                                <p className="text-xs text-blue-600 mt-1">
+                                                    Status: {pdfProcessingStatus}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Optional note that appears when PDF is uploaded */}
+                                {uploadedFile && (
+                                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                                        <p className="text-sm text-blue-700">
+                                            <span className="font-medium">PDF uploaded!</span> Fields below are now optional. You can leave them blank and analyze based on the PDF content only.
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Age {!uploadedFile && <span className="text-red-500">*</span>}
                                     </label>
                                     <input
                                         type="number"
                                         value={age}
-                                        onChange={(e) => setAge(e.target.value)}
+                                        onChange={handleAgeChange}
+                                        min="0"
                                         placeholder="Enter age"
                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
+                                    {ageError && (
+                                        <p className="text-red-500 text-xs mt-1">{ageError}</p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -186,12 +737,13 @@ function Innovate() {
                                     >
                                         <option value="male">Male</option>
                                         <option value="female">Female</option>
+                                        <option value="other">Other</option>
                                     </select>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Symptoms
+                                        Symptoms {!uploadedFile && <span className="text-red-500">*</span>}
                                     </label>
                                     <textarea
                                         value={symptoms}
@@ -230,7 +782,7 @@ function Innovate() {
                         </motion.div>
                     </div>
 
-                    {/* Results Section - Right Side (Square Layout) */}
+                    {/* Results Section */}
                     <div className="lg:col-span-2">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -238,13 +790,22 @@ function Innovate() {
                             transition={{ duration: 0.5, delay: 0.2 }}
                             className="h-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
                         >
-                            <div className="p-6 bg-gradient-to-r from-blue-50 to-gray-50 border-b border-gray-200">
+                            <div className="p-6 bg-gradient-to-r from-blue-50 to-gray-50 border-b border-gray-200 flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-gray-800 flex items-center">
                                     <Activity className="text-blue-600 mr-2" size={20} />
                                     Health Analysis Report
                                 </h2>
+                                {result && (
+                                    <button
+                                        onClick={downloadReportAsPDF}
+                                        className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                    >
+                                        <Download className="mr-2" size={16} />
+                                        Download PDF
+                                    </button>
+                                )}
                             </div>
-                            
+
                             <div className="p-6 h-[calc(100%-72px)] overflow-y-auto">
                                 {result ? (
                                     <div className="space-y-4">
@@ -252,39 +813,160 @@ function Innovate() {
                                             <div className="bg-blue-50 p-4 rounded-lg">
                                                 <h3 className="text-sm font-medium text-blue-800 mb-1">Patient Details</h3>
                                                 <p className="text-gray-700">
-                                                    Age: <span className="font-medium">{age}</span><br />
+                                                    Age: <span className="font-medium">{age || "Not provided"}</span><br />
                                                     Gender: <span className="font-medium">{sex}</span>
+                                                    {symptoms && <><br />Symptoms: <span className="font-medium">{symptoms}</span></>}
                                                 </p>
                                             </div>
                                             <div className="bg-green-50 p-4 rounded-lg">
                                                 <h3 className="text-sm font-medium text-green-800 mb-1">Report Generated</h3>
                                                 <p className="text-gray-700">
-                                                    {new Date().toLocaleDateString('en-US', { 
-                                                        weekday: 'long', 
-                                                        year: 'numeric', 
-                                                        month: 'long', 
-                                                        day: 'numeric' 
+                                                    {new Date().toLocaleDateString('en-US', {
+                                                        weekday: 'long',
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
                                                     })}
+                                                    {uploadedFile && <><br />PDF: <span className="font-medium">{uploadedFile.name}</span></>}
                                                 </p>
                                             </div>
                                         </div>
-                                        
+
+                                        {/* Add this right after the patient details grid */}
+                                        {result && parsePrimaryDisease(result) && (
+                                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-5 mb-4">
+                                                <div className="flex items-start space-x-2">
+                                                    <AlertTriangle className="text-yellow-600 mt-1" size={20} />
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                                                            Primary Disease Detected
+                                                        </h3>
+                                                        <div className="text-yellow-900 font-medium mb-3">
+                                                            {parsePrimaryDisease(result).disease}
+                                                        </div>
+                                                        
+                                                        {parsePrimaryDisease(result).symptoms && (
+                                                            <div>
+                                                                <h4 className="text-sm font-medium text-yellow-800 mb-2">
+                                                                    Associated Symptoms
+                                                                </h4>
+                                                                <ul className="list-disc list-inside text-yellow-900 text-sm space-y-1">
+                                                                    {parsePrimaryDisease(result).symptoms.map((symptom, index) => (
+                                                                        <li key={index}>{symptom}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                                             <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Results</h3>
-                                            <div className="prose max-w-none text-gray-700">
-                                                {result.split('\n').map((paragraph, i) => (
-                                                    <p key={i} className="mb-3">{paragraph}</p>
-                                                ))}
-                                            </div>
+                                            {result && (
+                                                <div className="space-y-6">
+                                                    {formatAnalysisResults(result).map((section, index) => (
+                                                        <div key={index} className="prose max-w-none">
+                                                            {section.includes("Current Conditions:") ? (
+                                                                <div className="bg-blue-50 p-4 rounded-lg">
+                                                                    <h4 className="text-blue-800 font-medium mb-2">Current Conditions</h4>
+                                                                    <div className="text-gray-700">
+                                                                        {section.replace("Current Conditions:", "").trim()}
+                                                                    </div>
+                                                                </div>
+                                                            ) : section.includes("Future Risk Assessment:") ? (
+                                                                <div className="bg-purple-50 p-4 rounded-lg">
+                                                                    <h4 className="text-purple-800 font-medium mb-2">Future Risk Assessment</h4>
+                                                                    {section.replace("Future Risk Assessment:", "")
+                                                                        .split(/\[.*?\]/)
+                                                                        .filter(Boolean)
+                                                                        .map((condition, i) => (
+                                                                            <div key={i} className="mb-4 last:mb-0">
+                                                                                {condition.includes("%") && (
+                                                                                    <div className="flex items-center justify-between mb-2">
+                                                                                        <span className="font-medium">
+                                                                                            {condition.split('-')[0].trim()}
+                                                                                        </span>
+                                                                                        <span className="text-purple-600 font-bold">
+                                                                                            {condition.match(/\d+%/)?.[0] || "N/A"}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="text-gray-700 text-sm">
+                                                                                    {condition.split(/Description:|Treatment\/Prevention:/)
+                                                                                        .filter(Boolean)
+                                                                                        .map((text, j) => (
+                                                                                            <p key={j} className="mb-2">{text.trim()}</p>
+                                                                                        ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
+
+                                        {/* Add this after the Analysis Results section */}
+                                        {chartData && (
+                                            <div className="mt-6 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h3 className="text-lg font-medium text-gray-800">Risk Visualization</h3>
+                                                    <div className="space-x-2">
+                                                        <button
+                                                            onClick={() => setChartType('pie')}
+                                                            className={`px-3 py-1 rounded ${
+                                                                chartType === 'pie' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            Pie Chart
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setChartType('bar')}
+                                                            className={`px-3 py-1 rounded ${
+                                                                chartType === 'bar' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            Bar Chart
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="w-full h-[400px] flex items-center justify-center">
+                                                    {chartType === 'pie' ? (
+                                                        <Pie data={chartData} options={chartOptions} />
+                                                    ) : (
+                                                        <Bar data={chartData} options={chartOptions} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 p-8">
-                                        <Activity size={48} className="text-gray-300 mb-4" />
-                                        <h3 className="text-lg font-medium text-gray-500 mb-2">No Analysis Yet</h3>
-                                        <p className="text-sm max-w-md">
-                                            Submit your health information to receive a comprehensive risk analysis report.
-                                        </p>
+                                        {uploadedFile ? (
+                                            <div>
+                                                <FileText size={48} className="text-blue-300 mb-4 mx-auto" />
+                                                <h3 className="text-lg font-medium text-blue-500 mb-2">PDF Uploaded</h3>
+                                                <p className="text-sm max-w-md">
+                                                    Your PDF has been processed. Click "Analyze Health Risks" to generate a report based on the PDF content.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <Activity size={48} className="text-gray-300 mb-4" />
+                                                <h3 className="text-lg font-medium text-gray-500 mb-2">No Analysis Yet</h3>
+                                                <p className="text-sm max-w-md">
+                                                    Submit your health information or upload a medical report PDF to receive a comprehensive risk analysis.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

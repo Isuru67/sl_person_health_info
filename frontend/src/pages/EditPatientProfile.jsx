@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
 import { motion } from 'framer-motion';
+import { MdLogout } from "react-icons/md"; // Import logout icon
 
 const EditPatientProfile = () => {
   const [patient, setPatient] = useState({
@@ -93,6 +94,17 @@ const EditPatientProfile = () => {
       });
   };
 
+  // Add logout function
+  const handleLogout = () => {
+    // Clear all user data from localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
+    
+    // Redirect to login page
+    navigate('/admin');
+  };
+
   // Animation variants
   const navItem = {
     hidden: { y: -20, opacity: 0 },
@@ -124,7 +136,7 @@ const EditPatientProfile = () => {
     }
   };
 
-  const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
+  const navItems = ['Home', 'Features', 'About Us', 'Contact'];
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
@@ -179,6 +191,7 @@ const EditPatientProfile = () => {
               >
                 {patient.name || 'Edit Patient'}
               </motion.div>
+              
               {patient.pic && (
                 <motion.img
                   whileHover={{ scale: 1.1 }}
@@ -188,6 +201,18 @@ const EditPatientProfile = () => {
                   className="w-10 h-10 rounded-full border-2 border-white cursor-pointer object-cover"
                 />
               )}
+              
+              {/* Logout Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center text-white hover:text-red-200 transition-colors"
+                title="Logout"
+              >
+                <MdLogout className="text-xl mr-1" />
+                <span className="hidden md:inline">Logout</span>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -195,15 +220,6 @@ const EditPatientProfile = () => {
 
       {/* Main Content */}
       <div className="pt-24 pb-12 px-4 container mx-auto">
-        {/* BackButton */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute left-6 top-20 z-40"
-        >
-          <BackButton className="text-gray-700 hover:text-indigo-600" />
-        </motion.div>
         <motion.h1 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}

@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import { User, Bell, X } from 'lucide-react';
 
 const HospitalRegister = () => {
- 
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -45,7 +44,7 @@ const HospitalRegister = () => {
   const [activeNav, setActiveNav] = useState('Register');
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
-  const navItems = ['Home', 'Features', 'Pricing', 'About Us', 'Contact'];
+  const navItems = ['Home', 'Features', 'About Us', 'Contact'];
 
   // Validation Functions
   const validateHospitalName = (name) => {
@@ -215,7 +214,7 @@ const HospitalRegister = () => {
 
   const handleClosePopup = () => {
     setShowSuccessPopup(false);
-    navigate('/admin'); // Navigate to login page
+    navigate('/admin'); // Redirect to login page after closing popup
   };
 
   return (

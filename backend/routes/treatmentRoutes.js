@@ -58,7 +58,7 @@ router.get('/treatment/:nic', async (req, res) => {
             return res.status(404).json({ 
                 error: hospitalId 
                     ? "No treatments found for this patient that were added by your hospital" 
-                    : "Treatment not found" 
+                    : "No treatments found for this patient" 
             });
         }
         
