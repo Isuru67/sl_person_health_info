@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
-
 import { User, Bell, Activity, File, FileText, AlertTriangle, Download } from 'lucide-react';
 import axios from "axios";
 import * as pdfjsLib from 'pdfjs-dist';
 import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
+import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
 
+// Register ChartJS components (add this before the Innovate function)
+ChartJS.register(
+    ArcElement,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 // Get the PDF.js version and set up the worker
 const setupPdfWorker = () => {
@@ -44,6 +55,9 @@ function Innovate() {
     const [uploadedFile, setUploadedFile] = useState(null);
     const [pdfContent, setPdfContent] = useState(""); // Store extracted PDF content
     const [pdfProcessingStatus, setPdfProcessingStatus] = useState(""); // To show PDF processing status
+    const [chartData, setChartData] = useState(null);
+    const [chartType, setChartType] = useState('pie');
+    const [ageError, setAgeError] = useState("");
 
     const navItem = {
         hidden: { y: -20, opacity: 0 },
@@ -153,10 +167,7 @@ function Innovate() {
                                     viewport: viewport
                                 }).promise;
                                 
-                                
                                 text += `[Image-based content detected on page ${pageNum}. In production, this would be sent to an OCR service like Tesseract.js or Google Vision API for text extraction.]\n\n`;
-                                
-                                
                             } catch (renderErr) {
                                 console.warn(`Failed to render page ${pageNum} as image:`, renderErr);
                                 text += `[Failed to process page ${pageNum} as image: ${renderErr.message}]\n\n`;
@@ -255,11 +266,64 @@ function Innovate() {
         }
     };
 
+    // Update the parseRiskPercentages function to improve parsing accuracy
+    const parseRiskPercentages = (result) => {
+        if (!result) return null;
+
+        const percentages = [];
+        const conditions = [];
+        const regex = /\[(.*?)\]\s*-\s*(\d+)%/g;
+        let match;
+
+        while ((match = regex.exec(result)) !== null) {
+            conditions.push(match[1].trim());
+            percentages.push(parseInt(match[2]));
+        }
+
+        if (conditions.length === 0) return null;
+
+        return {
+            labels: conditions,
+            datasets: [{
+                label: 'Risk Probability (%)',
+                data: percentages,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                ],
+                borderWidth: 1,
+            }]
+        };
+    };
+
+    // Modify handleSubmit to include chart data parsing
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError("");
         setResult(null);
+
+        // Add age validation
+        if (age) {
+            const ageNum = parseInt(age);
+            if (ageNum < 0 || ageNum > 130 || !Number.isInteger(parseFloat(age))) {
+                setError("Please enter a valid age (0-130 years)");
+                setIsLoading(false);
+                return;
+            }
+        }
 
         // Check if PDF is uploaded, if not, require fields
         if (!uploadedFile && (!age || !symptoms)) {
@@ -272,6 +336,7 @@ function Innovate() {
         let prompt = "";
         
         // Include patient details if provided
+        //comment
         if (age || symptoms) {
             const symptomList = symptoms ? symptoms.split(",").map(s => s.trim()).join(", ") : "No symptoms specified";
             prompt = `The patient is ${age || "age not provided"} years old, gender is ${sex}. `;
@@ -286,7 +351,7 @@ function Innovate() {
             prompt += `Here is the patient's medical record from the uploaded PDF:\n${pdfContent}\n`;
         }
 
-        prompt += "\nWhat possible health conditions or risks might they face in the future?";
+        prompt += "\nWhat possible health conditions or risks might they face in the future? and tell me the possible treatment for them.also tell what probability of having these conditions? probability should be in percentage.";
 
         try {
             const response = await axios.post("http://localhost:5555/ino/analyze", {
@@ -295,6 +360,12 @@ function Innovate() {
 
             const answer = response.data.answer;
             setResult(answer);
+            
+            // Parse and set chart data
+            const parsedChartData = parseRiskPercentages(answer);
+            if (parsedChartData) {
+                setChartData(parsedChartData);
+            }
         } catch (error) {
             console.error("Error analyzing health:", error);
             setError("An error occurred while processing your request. Please try again.");
@@ -303,7 +374,48 @@ function Innovate() {
         }
     };
 
-    // Function to download the report as a PDF
+    // Update the chart options for better visualization
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                }
+            },
+            title: {
+                display: true,
+                text: 'Health Risk Probabilities',
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                },
+                padding: 20
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `Risk: ${context.parsed}%`
+                }
+            }
+        },
+        ...(chartType === 'bar' && {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Probability (%)'
+                    }
+                }
+            }
+        })
+    };
+
+    // Updated downloadReportAsPDF function
     const downloadReportAsPDF = () => {
         const doc = new jsPDF();
         let yOffset = 10;
@@ -354,9 +466,9 @@ function Innovate() {
         doc.setFont("helvetica", "normal");
 
         // Split the result into lines and handle page overflow
-        const lines = doc.splitTextToSize(result, 180); // 180 is the width of the page minus margins
+        const lines = doc.splitTextToSize(result, 180);
         for (let i = 0; i < lines.length; i++) {
-            if (yOffset > 270) { // If we're near the bottom of the page, add a new page
+            if (yOffset > 270) {
                 doc.addPage();
                 yOffset = 10;
             }
@@ -364,8 +476,92 @@ function Innovate() {
             yOffset += 5;
         }
 
+        // Add Chart Section
+        if (chartData) {
+            doc.addPage();
+            doc.setFont("helvetica", "bold");
+            doc.text("Risk Analysis Visualization", 10, 20);
+            doc.setFont("helvetica", "normal");
+
+            // Get the canvas element containing the chart
+            const chartElement = document.querySelector('canvas');
+            if (chartElement) {
+                // Convert the chart to an image
+                const chartImage = chartElement.toDataURL('image/png');
+                
+                // Calculate dimensions to maintain aspect ratio
+                const imgWidth = 190; // Max width for the page
+                const imgHeight = (chartElement.height * imgWidth) / chartElement.width;
+                
+                // Add the chart image to the PDF
+                doc.addImage(chartImage, 'PNG', 10, 30, imgWidth, imgHeight);
+
+                // Add legend below the chart
+                let legendY = 30 + imgHeight + 10;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text("Risk Percentages:", 10, legendY);
+                legendY += 5;
+                doc.setFont("helvetica", "normal");
+
+                // Add the risk percentages as text
+                chartData.labels.forEach((label, index) => {
+                    if (legendY > 270) {
+                        doc.addPage();
+                        legendY = 20;
+                    }
+                    const percentage = chartData.datasets[0].data[index];
+                    doc.text(`${label}: ${percentage}%`, 10, legendY);
+                    legendY += 5;
+                });
+            }
+        }
+
         // Download the PDF
         doc.save("Health_Analysis_Report.pdf");
+    };
+
+    // Add this helper function to format the analysis results
+const formatAnalysisResults = (result) => {
+    if (!result) return null;
+    
+    const sections = result.split(/\d+\./).filter(Boolean);
+    return sections.map(section => section.trim());
+};
+
+    // Update the age validation handler
+    const handleAgeChange = (e) => {
+        const value = e.target.value;
+        if (value < 0) {
+            setAgeError("Age cannot be negative");
+            setAge("");
+        } else if (value > 130) {
+            setAgeError("Age cannot exceed 130 years");
+            setAge("");
+        } else {
+            setAgeError("");
+            setAge(value);
+        }
+    };
+
+    // Add this helper function near the other helper functions
+    const parsePrimaryDisease = (result) => {
+        if (!result) return null;
+        
+        const primaryDiseaseMatch = result.match(/Primary Disease:(.*?)(?=Current Conditions:|$)/s);
+        if (!primaryDiseaseMatch) return null;
+
+        const primaryDiseaseParts = primaryDiseaseMatch[1].split('Associated Symptoms:');
+        const disease = primaryDiseaseParts[0].trim();
+        const symptoms = primaryDiseaseParts[1]
+            ?.split('-')
+            .filter(Boolean)
+            .map(symptom => symptom.trim());
+
+        return {
+            disease,
+            symptoms
+        };
     };
 
     return (
@@ -520,10 +716,14 @@ function Innovate() {
                                     <input
                                         type="number"
                                         value={age}
-                                        onChange={(e) => setAge(e.target.value)}
+                                        onChange={handleAgeChange}
+                                        min="0"
                                         placeholder="Enter age"
                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
+                                    {ageError && (
+                                        <p className="text-red-500 text-xs mt-1">{ageError}</p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -632,14 +832,121 @@ function Innovate() {
                                             </div>
                                         </div>
 
+                                        {/* Add this right after the patient details grid */}
+                                        {result && parsePrimaryDisease(result) && (
+                                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-5 mb-4">
+                                                <div className="flex items-start space-x-2">
+                                                    <AlertTriangle className="text-yellow-600 mt-1" size={20} />
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                                                            Primary Disease Detected
+                                                        </h3>
+                                                        <div className="text-yellow-900 font-medium mb-3">
+                                                            {parsePrimaryDisease(result).disease}
+                                                        </div>
+                                                        
+                                                        {parsePrimaryDisease(result).symptoms && (
+                                                            <div>
+                                                                <h4 className="text-sm font-medium text-yellow-800 mb-2">
+                                                                    Associated Symptoms
+                                                                </h4>
+                                                                <ul className="list-disc list-inside text-yellow-900 text-sm space-y-1">
+                                                                    {parsePrimaryDisease(result).symptoms.map((symptom, index) => (
+                                                                        <li key={index}>{symptom}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                                             <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Results</h3>
-                                            <div className="prose max-w-none text-gray-700">
-                                                {result.split('\n').map((paragraph, i) => (
-                                                    <p key={i} className="mb-3">{paragraph}</p>
-                                                ))}
-                                            </div>
+                                            {result && (
+                                                <div className="space-y-6">
+                                                    {formatAnalysisResults(result).map((section, index) => (
+                                                        <div key={index} className="prose max-w-none">
+                                                            {section.includes("Current Conditions:") ? (
+                                                                <div className="bg-blue-50 p-4 rounded-lg">
+                                                                    <h4 className="text-blue-800 font-medium mb-2">Current Conditions</h4>
+                                                                    <div className="text-gray-700">
+                                                                        {section.replace("Current Conditions:", "").trim()}
+                                                                    </div>
+                                                                </div>
+                                                            ) : section.includes("Future Risk Assessment:") ? (
+                                                                <div className="bg-purple-50 p-4 rounded-lg">
+                                                                    <h4 className="text-purple-800 font-medium mb-2">Future Risk Assessment</h4>
+                                                                    {section.replace("Future Risk Assessment:", "")
+                                                                        .split(/\[.*?\]/)
+                                                                        .filter(Boolean)
+                                                                        .map((condition, i) => (
+                                                                            <div key={i} className="mb-4 last:mb-0">
+                                                                                {condition.includes("%") && (
+                                                                                    <div className="flex items-center justify-between mb-2">
+                                                                                        <span className="font-medium">
+                                                                                            {condition.split('-')[0].trim()}
+                                                                                        </span>
+                                                                                        <span className="text-purple-600 font-bold">
+                                                                                            {condition.match(/\d+%/)?.[0] || "N/A"}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="text-gray-700 text-sm">
+                                                                                    {condition.split(/Description:|Treatment\/Prevention:/)
+                                                                                        .filter(Boolean)
+                                                                                        .map((text, j) => (
+                                                                                            <p key={j} className="mb-2">{text.trim()}</p>
+                                                                                        ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
+
+                                        {/* Add this after the Analysis Results section */}
+                                        {chartData && (
+                                            <div className="mt-6 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h3 className="text-lg font-medium text-gray-800">Risk Visualization</h3>
+                                                    <div className="space-x-2">
+                                                        <button
+                                                            onClick={() => setChartType('pie')}
+                                                            className={`px-3 py-1 rounded ${
+                                                                chartType === 'pie' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            Pie Chart
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setChartType('bar')}
+                                                            className={`px-3 py-1 rounded ${
+                                                                chartType === 'bar' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            Bar Chart
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="w-full h-[400px] flex items-center justify-center">
+                                                    {chartType === 'pie' ? (
+                                                        <Pie data={chartData} options={chartOptions} />
+                                                    ) : (
+                                                        <Bar data={chartData} options={chartOptions} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 p-8">
