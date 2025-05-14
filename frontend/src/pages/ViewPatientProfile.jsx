@@ -75,6 +75,7 @@ const ViewPatientProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState('Home');
+  const [searchTerm, setSearchTerm] = useState('');
   
   useEffect(() => {
     setLoading(true);
@@ -122,6 +123,25 @@ const ViewPatientProfile = () => {
       }
       
       groupedTreatments[hospitalName].push(treatment);
+    });
+    
+    return groupedTreatments;
+  };
+
+  // Function to filter hospitals based on search term
+  const getFilteredTreatmentsByHospital = () => {
+    const groupedTreatments = {};
+    
+    treatments.forEach(treatment => {
+      const hospitalName = treatment.hospitalName || 'Unknown Hospital';
+      
+      // Only add to groupedTreatments if hospital name matches search term
+      if (hospitalName.toLowerCase().includes(searchTerm.toLowerCase())) {
+        if (!groupedTreatments[hospitalName]) {
+          groupedTreatments[hospitalName] = [];
+        }
+        groupedTreatments[hospitalName].push(treatment);
+      }
     });
     
     return groupedTreatments;
@@ -522,7 +542,26 @@ const ViewPatientProfile = () => {
                 transition={{ delay: 1 }}
                 className="mt-8 px-8 pb-8"
               >
-                <h3 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Medical Summary</h3>
+                <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-200">
+                  <h3 className="text-2xl font-bold text-gray-800">Medical Summary</h3>
+                  <div className="relative w-64">
+                    <input
+                      type="text"
+                      placeholder="Search hospitals..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </div>
                 
                 {treatmentsLoading ? (
                   <div className="flex justify-center py-8">
@@ -530,7 +569,7 @@ const ViewPatientProfile = () => {
                   </div>
                 ) : treatments.length > 0 ? (
                   <div className="space-y-6">
-                    {Object.entries(getTreatmentsByHospital()).map(([hospitalName, hospitalTreatments]) => (
+                    {Object.entries(getFilteredTreatmentsByHospital()).map(([hospitalName, hospitalTreatments]) => (
                       <motion.div 
                         key={hospitalName}
                         initial={{ opacity: 0, y: 10 }}
@@ -627,6 +666,15 @@ const ViewPatientProfile = () => {
                         </div>
                       </motion.div>
                     ))}
+                    
+                    {/* No results message */}
+                    {Object.keys(getFilteredTreatmentsByHospital()).length === 0 && (
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <p className="text-yellow-800">
+                          No hospitals found matching "{searchTerm}". Try a different search term.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-blue-50 p-6 rounded-lg">
