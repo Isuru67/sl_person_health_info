@@ -414,7 +414,7 @@ function Innovate() {
         })
     };
 
-    // Function to download the report as a PDF
+    // Updated downloadReportAsPDF function
     const downloadReportAsPDF = () => {
         const doc = new jsPDF();
         let yOffset = 10;
@@ -465,14 +465,55 @@ function Innovate() {
         doc.setFont("helvetica", "normal");
 
         // Split the result into lines and handle page overflow
-        const lines = doc.splitTextToSize(result, 180); // 180 is the width of the page minus margins
+        const lines = doc.splitTextToSize(result, 180);
         for (let i = 0; i < lines.length; i++) {
-            if (yOffset > 270) { // If we're near the bottom of the page, add a new page
+            if (yOffset > 270) {
                 doc.addPage();
                 yOffset = 10;
             }
             doc.text(lines[i], 10, yOffset);
             yOffset += 5;
+        }
+
+        // Add Chart Section
+        if (chartData) {
+            doc.addPage();
+            doc.setFont("helvetica", "bold");
+            doc.text("Risk Analysis Visualization", 10, 20);
+            doc.setFont("helvetica", "normal");
+
+            // Get the canvas element containing the chart
+            const chartElement = document.querySelector('canvas');
+            if (chartElement) {
+                // Convert the chart to an image
+                const chartImage = chartElement.toDataURL('image/png');
+                
+                // Calculate dimensions to maintain aspect ratio
+                const imgWidth = 190; // Max width for the page
+                const imgHeight = (chartElement.height * imgWidth) / chartElement.width;
+                
+                // Add the chart image to the PDF
+                doc.addImage(chartImage, 'PNG', 10, 30, imgWidth, imgHeight);
+
+                // Add legend below the chart
+                let legendY = 30 + imgHeight + 10;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text("Risk Percentages:", 10, legendY);
+                legendY += 5;
+                doc.setFont("helvetica", "normal");
+
+                // Add the risk percentages as text
+                chartData.labels.forEach((label, index) => {
+                    if (legendY > 270) {
+                        doc.addPage();
+                        legendY = 20;
+                    }
+                    const percentage = chartData.datasets[0].data[index];
+                    doc.text(`${label}: ${percentage}%`, 10, legendY);
+                    legendY += 5;
+                });
+            }
         }
 
         // Download the PDF
