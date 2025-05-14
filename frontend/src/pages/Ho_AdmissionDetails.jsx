@@ -59,13 +59,29 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
         <div className="flex flex-col h-screen bg-gray-100">
             <DualNavbar />
 
-            <motion.section 
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6"
-            >
+            <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-6">
+                {/* Progress Indicator */}
+                <div className="w-full max-w-2xl mb-8">
+                    <div className="flex items-center justify-between relative">
+                        <div className="w-full h-2 bg-gray-200 absolute"></div>
+                        <div className="w-1/3 h-2 bg-blue-600 absolute"></div>
+                        <div className="flex justify-between w-full relative">
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-blue-600 text-white flex items-center justify-center z-10">1</div>
+                                <span className="text-sm mt-2 font-medium">Admission</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-gray-300 text-white flex items-center justify-center z-10">2</div>
+                                <span className="text-sm mt-2">Medical History</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-gray-300 text-white flex items-center justify-center z-10">3</div>
+                                <span className="text-sm mt-2">Treatment Plan</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <motion.form 
                     onSubmit={handleNext}
                     initial={{ scale: 0.9, rotate: -2 }}
@@ -149,7 +165,7 @@ const Ho_AdmissionDetails = ({ formData, setFormData }) => {
                         </motion.button>
                     </div>
                 </motion.form>
-            </motion.section>
+            </div>
         </div>
     );
 };
