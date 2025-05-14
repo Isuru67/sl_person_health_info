@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReactDOM from 'react-dom/client';
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
@@ -63,6 +64,129 @@ const ImagePreview = ({ images, title }) => {
         </div>
     );
 };
+
+const TreatmentReportContent = ({ treatment }) => {
+    return (
+        <div className="p-8 bg-white print:p-4">
+            <h1 className="text-2xl font-bold text-center mb-6">Treatment Report</h1>
+            <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-3">Patient Information</h2>
+                <p><strong>NIC:</strong> {treatment.patient_nic}</p>
+                <p><strong>Hospital:</strong> {treatment.hospitalName}</p>
+            </div>
+            
+            {/* Admission Details */}
+            <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-3">Admission Details</h2>
+                <p><strong>Date:</strong> {new Date(treatment.ho_admissionDetails?.admissionDate).toLocaleDateString()}</p>
+                <p><strong>Physician:</strong> {treatment.ho_admissionDetails?.admittingPhysician?.join(", ")}</p>
+                <p><strong>Diagnosis:</strong> {treatment.ho_admissionDetails?.primaryDiagnosis?.join(", ")}</p>
+            </div>
+
+            {/* Medical History */}
+            <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-3">Medical History</h2>
+                <p><strong>Allergies:</strong> {treatment.medicalHistory?.allergies?.join(", ") || "None"}</p>
+                <p><strong>Illnesses:</strong> {treatment.medicalHistory?.illnesses?.join(", ") || "None"}</p>
+                <p><strong>Medications:</strong> {treatment.medicalHistory?.medications?.join(", ") || "None"}</p>
+                <p><strong>Surgeries:</strong> {treatment.medicalHistory?.surgeries?.join(", ") || "None"}</p>
+                <p><strong>Immunizations:</strong> {treatment.medicalHistory?.immunizations?.join(", ") || "None"}</p>
+            </div>
+
+            {/* Surgery Reports Section */}
+            {treatment.medicalHistory?.su_imaging?.length > 0 && (
+                <div className="mb-6 page-break-inside-avoid">
+                    <h2 className="text-xl font-semibold mb-3">Surgery Reports</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                        {treatment.medicalHistory.su_imaging.map((image, index) => (
+                            <div key={index} className="print:break-inside-avoid">
+                                <img
+                                    src={image}
+                                    alt={`Surgery Report ${index + 1}`}
+                                    className="w-full max-h-64 object-contain border rounded-lg"
+                                />
+                                <p className="text-center text-sm mt-1">Surgery Report {index + 1}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Treatment Plan */}
+            <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-3">Treatment Plan</h2>
+                <p><strong>Medications:</strong> {treatment.treatmentPlan?.medications?.join(", ") || "None"}</p>
+                <p><strong>Lab Tests:</strong> {treatment.treatmentPlan?.labTests?.join(", ") || "None"}</p>
+                <p><strong>Therapies:</strong> {treatment.treatmentPlan?.therapies?.join(", ") || "None"}</p>
+            </div>
+
+            {/* Lab Reports Section */}
+            {treatment.treatmentPlan?.te_imaging?.length > 0 && (
+                <div className="mb-6 page-break-inside-avoid">
+                    <h2 className="text-xl font-semibold mb-3">Lab Reports</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                        {treatment.treatmentPlan.te_imaging.map((image, index) => (
+                            <div key={index} className="print:break-inside-avoid">
+                                <img
+                                    src={image}
+                                    alt={`Lab Report ${index + 1}`}
+                                    className="w-full max-h-64 object-contain border rounded-lg"
+                                />
+                                <p className="text-center text-sm mt-1">Lab Report {index + 1}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="text-center text-sm text-gray-500 mt-8">
+                <p>Report generated on {new Date().toLocaleString()}</p>
+                <p>{treatment.hospitalName}</p>
+            </div>
+        </div>
+    );
+};
+
+const generateReport = (treatment) => {
+    const reportWindow = window.open('', '_blank');
+    reportWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Treatment Report - ${treatment.patient_nic}</title>
+                <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+                <style>
+                    @media print {
+                        body { padding: 20px; }
+                        button { display: none; }
+                        .page-break-inside-avoid { page-break-inside: avoid; }
+                        img { max-width: 100%; height: auto; }
+                        @page { margin: 2cm; }
+                    }
+                    .print-button {
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        z-index: 1000;
+                    }
+                </style>
+            </head>
+            <body>
+                <button onclick="window.print()" class="print-button px-4 py-2 bg-blue-500 text-white rounded shadow">
+                    Print Report
+                </button>
+                <div id="report-root"></div>
+            </body>
+        </html>
+    `);
+
+    const root = ReactDOM.createRoot(reportWindow.document.getElementById('report-root'));
+    root.render(<TreatmentReportContent treatment={treatment} />);
+};
+
+// Example usage of generateReport
+// Uncomment the following line if you want to use it in the component
+// generateReport(treatments[0]); // Pass a treatment object as needed
 
 const ViewTreatment = () => {
     const { nic } = useParams();  // Get NIC from URL
@@ -263,7 +387,14 @@ const ViewTreatment = () => {
                                     Update Treatment
                                 </button>
                               
-                            {/* Delete Button for this treatment */}
+                            {/* Add Report Button */}
+                            <button
+                                onClick={() => generateReport(treatment)}
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 mt-4"
+                            >
+                                Generate Report
+                            </button>
+
                             <button
                                 onClick={() => handleDelete(treatment._id)}  // Delete specific treatment
                                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 mt-4"
