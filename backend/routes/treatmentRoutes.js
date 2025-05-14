@@ -119,4 +119,62 @@ router.get(`/treatments/all`, async (req, res) => {
     }
 });
 
+// Add these new endpoints
+router.get('/treatment/count/:hospitalId', async (req, res) => {
+    try {
+        const { hospitalId } = req.params;
+        
+        // Get unique patient count for this hospital
+        const uniquePatients = await Treatment.distinct('patient_nic', { hospitalId }).length;
+        
+        // Get active treatments count
+        const activeTreatments = await Treatment.countDocuments({
+            hospitalId,
+            status: 'active'
+        });
+
+        res.json({
+            uniquePatients,
+            activeTreatments
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/treatment/stats/:hospitalId', async (req, res) => {
+    try {
+        const { hospitalId } = req.params;
+        
+        // Get unique patient count
+        const uniquePatients = await Treatment.distinct('patient_nic', { hospitalId });
+        
+        // Get active treatments count
+        const activeTreatments = await Treatment.countDocuments({
+            hospitalId,
+            'treatmentPlan.medications': { $exists: true, $ne: [] }
+        });
+
+        // Get completed treatments count
+        const completedTreatments = await Treatment.countDocuments({
+            hospitalId,
+            'treatmentPlan.medications': { $exists: true, $ne: [] },
+            // Add any other conditions that define a completed treatment
+        });
+
+        res.json({
+            totalPatients: uniquePatients.length,
+            activeTreatments,
+            completedTreatments,
+            pendingReports: await Treatment.countDocuments({
+                hospitalId,
+                'treatmentPlan.te_imaging': { $size: 0 }
+            })
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
 export default router;
