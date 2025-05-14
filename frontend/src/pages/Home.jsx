@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import videoFile from '../components/home/bvideo.mp4';
 import './styles.css';
 
@@ -11,6 +11,7 @@ const Home = () => {
   const [activeNav, setActiveNav] = useState('Home');
   const videoRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Enhanced auto-play with intersection observer
   useEffect(() => {
@@ -70,6 +71,13 @@ const Home = () => {
 
   const navItems = ['Home', 'Features', 'About Us', 'Contact'];
 
+  const handleNavigation = (item) => {
+    setActiveNav(item);
+    if (item === 'About Us') {
+      navigate('/about-us');
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-900 to-indigo-900">
       {/* Vibrant Navigation Bar */}
@@ -106,7 +114,7 @@ const Home = () => {
                   whileHover="hover"
                   whileTap="tap"
                   variants={navItem}
-                  onClick={() => setActiveNav(item)}
+                  onClick={() => handleNavigation(item)}
                   className={`px-4 py-2 rounded-full cursor-pointer ${activeNav === item ? 
                     'bg-white text-purple-600 font-bold' : 
                     'text-white hover:bg-white/20'}`}

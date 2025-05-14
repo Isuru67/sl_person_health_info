@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-//import axios from "axios";
+import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
-// Add missing icon imports
 import { FaUsers, FaFileAlt, FaUserMd, FaClock } from "react-icons/fa";
+import { FiActivity, FiUsers, FiFileText, FiSettings, FiTrendingUp } from 'react-icons/fi';
 
 const HospitalDashboard = () => {
   const { hospitalName } = useParams(); // Get hospital name from URL
@@ -35,13 +35,24 @@ const HospitalDashboard = () => {
       
       // Only fetch stats if the hospital is approved
       if (user.status === 'approved') {
-        // Fetch some mock statistics (would be replaced with real API calls)
-        // In a real app, you'd fetch this data from your backend
-        setStats({
-          totalPatients: Math.floor(Math.random() * 100),
-          activeTreatments: Math.floor(Math.random() * 50),
-          pendingReports: Math.floor(Math.random() * 20)
-        });
+        // Fetch real statistics
+        axios.get(`http://localhost:5555/api/treatment/stats/${user.hospitalId}`)
+          .then(response => {
+            setStats({
+              totalPatients: response.data.totalPatients || 0,
+              activeTreatments: response.data.activeTreatments || 0,
+              pendingReports: response.data.pendingReports || 0
+            });
+          })
+          .catch(error => {
+            console.error("Error fetching statistics:", error);
+            // Set default values if error occurs
+            setStats({
+              totalPatients: 0,
+              activeTreatments: 0,
+              pendingReports: 0
+            });
+          });
       }
     } else {
       // If no user info is found, redirect to login
@@ -96,100 +107,64 @@ const HospitalDashboard = () => {
   // Render approved status view (full dashboard)
   const renderApprovedView = () => {
     return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Welcome to {hospitalInfo.hospitalName || "Hospital"} Dashboard
+      <div className="container mx-auto px-4 py-8">
+        {/* Welcome Message */}
+        <div className="bg-gradient-to-r from-blue-400 to-indigo-400 rounded-2xl shadow-xl p-6 mb-4">
+          <h2 className="text-3xl font-bold text-black mb-2">
+            Welcome back, {hospitalInfo.hospitalName}
           </h2>
-          
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-semibold text-gray-500">HOSPITAL ID</p>
-                <p className="text-lg font-medium">{hospitalInfo.hospitalId || "N/A"}</p>
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-semibold text-gray-500">EMAIL</p>
-                <p className="text-lg font-medium">{hospitalInfo.email || "N/A"}</p>
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-semibold text-gray-500">STATUS</p>
-                <p className="text-lg font-medium">
-                  <span className={`inline-block px-2 py-1 rounded-full text-sm ${
-                    hospitalInfo.status === 'Active' ? 'bg-green-100 text-green-800' : 
-                    hospitalInfo.status === 'Inactive' ? 'bg-red-100 text-red-800' : 
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {hospitalInfo.status || "Pending"}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
+          <p className="text-white-400">Here's what's happening with your hospital today</p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-md text-white">
-            <h3 className="text-lg font-medium mb-2">Total Patients</h3>
-            <p className="text-3xl font-bold">{stats.totalPatients}</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-md text-white">
-            <h3 className="text-lg font-medium mb-2">Active Treatments</h3>
-            <p className="text-3xl font-bold">{stats.activeTreatments}</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-md text-white">
-            <h3 className="text-lg font-medium mb-2">Pending Reports</h3>
-            <p className="text-3xl font-bold">{stats.pendingReports}</p>
-          </div>
+
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <StatsCard
+            title="Total Patients"
+            value={stats.totalPatients}
+            icon={<FiUsers className="w-6 h-6" />}
+            trend="+5% from last month"
+            color="blue"
+          />
+          <StatsCard
+            title="Active Treatments"
+            value={stats.activeTreatments}
+            icon={<FiActivity className="w-6 h-6" />}
+            trend="Currently ongoing"
+            color="green"
+          />
+          <StatsCard
+            title="Pending Reports"
+            value={stats.pendingReports}
+            icon={<FiFileText className="w-6 h-6" />}
+            trend="Needs attention"
+            color="yellow"
+          />
         </div>
-        
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h3 className="text-xl font-semibold mb-4">Quick Access</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button 
-              onClick={() => {
-                // Navigate to the patient details page with hospital name in URL
-                const urlFriendlyName = hospitalInfo.hospitalName
-                  ? hospitalInfo.hospitalName
-                      .toLowerCase()
-                      .replace(/[^\w\s-]/g, '')
-                      .replace(/\s+/g, '-')
-                  : 'hospital';
-                navigate(`/${urlFriendlyName}/h-patientdetails`);
-              }}
-              className="p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition flex items-center gap-3"
-            >
-              <FaUsers className="text-blue-600" size={24} />
-              <div className="text-left">
-                <p className="font-semibold">Patient Records</p>
-                <p className="text-sm text-gray-600">View and manage patients</p>
-              </div>
-            </button>
-            
-            <button 
-              className="p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition flex items-center gap-3"
-            >
-              <FaFileAlt className="text-green-600" size={24} />
-              <div className="text-left">
-                <p className="font-semibold">Treatment Reports</p>
-                <p className="text-sm text-gray-600">View recent treatments</p>
-              </div>
-            </button>
-            
-            <button 
-              className="p-4 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition flex items-center gap-3"
-            >
-              <FaUserMd className="text-purple-600" size={24} />
-              <div className="text-left">
-                <p className="font-semibold">Hospital Profile</p>
-                <p className="text-sm text-gray-600">Update your information</p>
-              </div>
-            </button>
-          </div>
+
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <QuickActionCard
+            title="Add Treatment"
+            description="Record new patient treatment"
+            icon={<FiFileText />}
+            onClick={() => navigate(`/${hospitalInfo.hospitalName}/h-patientdetails`)}
+          />
+          <QuickActionCard
+            title="View Reports"
+            description="Access treatment reports"
+            icon={<FiTrendingUp />}
+          />
+          <QuickActionCard
+            title="Patient Records"
+            description="Manage patient information"
+            icon={<FiUsers />}
+          />
+          <QuickActionCard
+            title="Settings"
+            description="Update hospital profile"
+            icon={<FiSettings />}
+            onClick={() => navigate(`/hospital-view/${hospitalInfo.hospitalId}`)}
+          />
         </div>
       </div>
     );
@@ -203,6 +178,67 @@ const HospitalDashboard = () => {
       {/* Conditional rendering based on hospital status */}
       {hospitalInfo.status === 'pending' ? renderPendingView() : renderApprovedView()}
     </div>
+  );
+};
+
+const StatsCard = ({ title, value, icon, trend, color }) => {
+  const colorStyles = {
+    blue: {
+      background: "bg-gradient-to-r from-blue-500/10 to-blue-50",
+      icon: "bg-blue-500",
+      text: "text-blue-700",
+      border: "border-blue-100"
+    },
+    green: {
+      background: "bg-gradient-to-r from-green-500/10 to-green-50",
+      icon: "bg-green-500",
+      text: "text-green-700",
+      border: "border-green-100"
+    },
+    yellow: {
+      background: "bg-gradient-to-r from-yellow-500/10 to-yellow-50",
+      icon: "bg-yellow-500",
+      text: "text-yellow-700",
+      border: "border-yellow-100"
+    }
+  };
+
+  const style = colorStyles[color];
+
+  return (
+    <div className={`${style.background} rounded-xl border ${style.border} p-6 hover:shadow-xl transition-all duration-300`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-3 rounded-full ${style.icon} text-white`}>
+          {icon}
+        </div>
+        <span className={`text-sm ${style.text} bg-white px-3 py-1 rounded-full shadow-sm`}>
+          {trend}
+        </span>
+      </div>
+      <h3 className={`text-lg font-semibold ${style.text} mb-2`}>{title}</h3>
+      <p className="text-3xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+};
+
+const QuickActionCard = ({ title, description, icon, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 text-left w-full group"
+    >
+      <div className="flex items-center space-x-4">
+        <div className="p-3 rounded-full bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
+            {title}
+          </h3>
+          <p className="text-sm text-gray-500">{description}</p>
+        </div>
+      </div>
+    </button>
   );
 };
 

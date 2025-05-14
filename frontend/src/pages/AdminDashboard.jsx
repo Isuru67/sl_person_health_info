@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const AdminDashboard = () => {
   const [hospitals, setHospitals] = useState([]);
@@ -56,6 +60,7 @@ const AdminDashboard = () => {
     navigate(`/hospital-edit/${hospitalId}`);
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleAddNew = () => {
     navigate('/add-hospital');
   };
@@ -93,6 +98,168 @@ const AdminDashboard = () => {
     { title: "Inactive", value: hospitals.filter(h => h.status && h.status.toLowerCase() === 'inactive').length, color: "from-red-500 to-pink-500" },
     { title: "Pending", value: hospitals.filter(h => h.status && h.status.toLowerCase() === 'pending').length, color: "from-yellow-500 to-amber-500" }
   ];
+
+  // Add new function for PDF generation
+  const generatePDFReport = () => {
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Add Header
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(16);
+      doc.text('Hospital Management System Report', 15, 15);
+      
+      doc.setFontSize(12);
+      doc.text(`Generated Date: ${new Date().toLocaleString()}`, 15, 25);
+
+      // Add Statistics Table
+      const statisticsData = [
+        ['Total Hospitals', hospitals.length],
+        ['Active Hospitals', hospitals.filter(h => h.status === 'active').length],
+        ['Inactive Hospitals', hospitals.filter(h => h.status === 'inactive').length],
+        ['Pending Hospitals', hospitals.filter(h => h.status === 'pending').length]
+      ];
+
+      autoTable(doc, {
+        startY: 35,
+        head: [['Category', 'Count']],
+        body: statisticsData,
+        theme: 'grid',
+        styles: {
+          fontSize: 10,
+          cellWidth: 'auto',
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [100, 100, 100],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        }
+      });
+
+      // Add Hospitals Table
+      const hospitalsData = hospitals.map(hospital => [
+        hospital.hospitalId || '',
+        hospital.hospitalName || '',
+        hospital.email || '',
+        hospital.mobile1 || '',
+        hospital.status || ''
+      ]);
+
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['ID', 'Name', 'Email', 'Contact', 'Status']],
+        body: hospitalsData,
+        theme: 'grid',
+        styles: {
+          fontSize: 8,
+          cellPadding: 2,
+        },
+        headStyles: {
+          fillColor: [63, 81, 181],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 50 },
+          3: { cellWidth: 35 },
+          4: { cellWidth: 30 }
+        }
+      });
+
+      // Add Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${i} of ${pageCount}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
+
+      // Save the PDF
+      doc.save('hospital_management_report.pdf');
+
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      alert('Error generating PDF. Please try again.');
+    }
+  };
+
+  // Add new function for Excel generation
+  const generateExcelReport = () => {
+    const workbook = XLSX.utils.book_new();
+    
+    // Convert hospitals data to worksheet
+    const worksheetData = hospitals.map(hospital => ({
+        'Hospital ID': hospital.hospitalId,
+        'Name': hospital.hospitalName,
+        'Email': hospital.email,
+        'Primary Contact': hospital.mobile1,
+        'Secondary Contact': hospital.mobile2,
+        'Status': hospital.status
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Hospitals');
+
+    // Generate statistics sheet
+    const statsData = [
+        ['Statistics', 'Count'],
+        ['Total Hospitals', hospitals.length],
+        ['Active Hospitals', hospitals.filter(h => h.status === 'active').length],
+        ['Pending Approval', hospitals.filter(h => h.status === 'pending').length],
+        ['Inactive Hospitals', hospitals.filter(h => h.status === 'inactive').length]
+    ];
+
+    const statsWorksheet = XLSX.utils.aoa_to_sheet(statsData);
+    XLSX.utils.book_append_sheet(workbook, statsWorksheet, 'Statistics');
+
+    // Save the file
+    XLSX.writeFile(workbook, 'hospital_management_report.xlsx');
+  };
+
+  // Add Report Generation Buttons to the UI
+  const renderReportButtons = () => (
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex gap-4 mb-6"
+    >
+        <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={generatePDFReport}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 flex items-center gap-2"
+        >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            Download PDF Report
+        </motion.button>
+
+        <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={generateExcelReport}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 flex items-center gap-2"
+        >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            Download Excel Report
+        </motion.button>
+    </motion.div>
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -180,6 +347,9 @@ const AdminDashboard = () => {
               <p className="text-gray-600 mt-2">View and manage all registered hospitals</p>
             </div>
           </motion.div>
+
+          {/* Add Report Buttons */}
+          {renderReportButtons()}
 
           {/* Stats Cards */}
           <motion.div
