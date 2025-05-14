@@ -336,6 +336,7 @@ function Innovate() {
         let prompt = "";
         
         // Include patient details if provided
+        //comment
         if (age || symptoms) {
             const symptomList = symptoms ? symptoms.split(",").map(s => s.trim()).join(", ") : "No symptoms specified";
             prompt = `The patient is ${age || "age not provided"} years old, gender is ${sex}. `;
