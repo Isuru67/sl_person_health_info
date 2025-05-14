@@ -113,21 +113,37 @@ const TreatmentPlan = ({ formData, setFormData }) => {
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
-            {/* Top Navigation Bar */}
             <DualNavbar />
+            
+            <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-6">
+                {/* Progress Indicator */}
+                <div className="w-full max-w-2xl mb-8">
+                    <div className="flex items-center justify-between relative">
+                        <div className="w-full h-2 bg-gray-200 absolute"></div>
+                        <div className="w-full h-2 bg-blue-600 absolute"></div>
+                        <div className="flex justify-between w-full relative">
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-blue-600 text-white flex items-center justify-center z-10">✓</div>
+                                <span className="text-sm mt-2 font-medium">Admission</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-blue-600 text-white flex items-center justify-center z-10">✓</div>
+                                <span className="text-sm mt-2 font-medium">Medical History</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-blue-600 text-white flex items-center justify-center z-10">3</div>
+                                <span className="text-sm mt-2 font-medium">Treatment Plan</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-                className="flex justify-center items-center min-h-screen bg-white p-6"
-            >
                 <motion.form
                     onSubmit={handleSubmit} // **Submit instead of navigating**
                     initial={{ scale: 0.9, rotate: -2 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring" }}
-                    className="w-full max-w-lg bg-gray-50 p-6 rounded-lg shadow-md"
+                    className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-blue-500"
                 >
                     <motion.h2
                         initial={{ y: -20 }}
@@ -231,7 +247,7 @@ const TreatmentPlan = ({ formData, setFormData }) => {
                         </motion.button>
                     </div>
                 </motion.form>
-            </motion.div>
+            </div>
         </div>
     );
 };
