@@ -496,6 +496,26 @@ const formatAnalysisResults = (result) => {
         }
     };
 
+    // Add this helper function near the other helper functions
+    const parsePrimaryDisease = (result) => {
+        if (!result) return null;
+        
+        const primaryDiseaseMatch = result.match(/Primary Disease:(.*?)(?=Current Conditions:|$)/s);
+        if (!primaryDiseaseMatch) return null;
+
+        const primaryDiseaseParts = primaryDiseaseMatch[1].split('Associated Symptoms:');
+        const disease = primaryDiseaseParts[0].trim();
+        const symptoms = primaryDiseaseParts[1]
+            ?.split('-')
+            .filter(Boolean)
+            .map(symptom => symptom.trim());
+
+        return {
+            disease,
+            symptoms
+        };
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-white">
             {/* Navigation Bar */}
@@ -763,6 +783,36 @@ const formatAnalysisResults = (result) => {
                                                 </p>
                                             </div>
                                         </div>
+
+                                        {/* Add this right after the patient details grid */}
+                                        {result && parsePrimaryDisease(result) && (
+                                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-5 mb-4">
+                                                <div className="flex items-start space-x-2">
+                                                    <AlertTriangle className="text-yellow-600 mt-1" size={20} />
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                                                            Primary Disease Detected
+                                                        </h3>
+                                                        <div className="text-yellow-900 font-medium mb-3">
+                                                            {parsePrimaryDisease(result).disease}
+                                                        </div>
+                                                        
+                                                        {parsePrimaryDisease(result).symptoms && (
+                                                            <div>
+                                                                <h4 className="text-sm font-medium text-yellow-800 mb-2">
+                                                                    Associated Symptoms
+                                                                </h4>
+                                                                <ul className="list-disc list-inside text-yellow-900 text-sm space-y-1">
+                                                                    {parsePrimaryDisease(result).symptoms.map((symptom, index) => (
+                                                                        <li key={index}>{symptom}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                                             <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Results</h3>

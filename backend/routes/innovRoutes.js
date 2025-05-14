@@ -22,16 +22,27 @@ router.post('/analyze', async (req, res) => {
             
             Please provide a structured analysis in the following format:
 
-            1. Current Conditions:
+            1. Primary Disease:
+            - Identify and explain the main disease or condition
+            - List all possible/existing symptoms associated with this primary disease
+            
+            2. Current Conditions:
             - List and briefly explain any current health conditions identified
             
-            2. Future Risk Assessment:
+            3. Future Risk Assessment:
             For each condition, use exactly this format:
             [Condition Name] - XX% (where XX is a number between 0-100)
             Description: Brief description of the condition
             Treatment/Prevention: Recommended measures
             
             Example format:
+            Primary Disease: Diabetes Type 2
+            Associated Symptoms:
+            - Increased thirst
+            - Frequent urination
+            - Fatigue
+            - Blurred vision
+            
             [Heart Disease] - 35%
             Description: Risk of developing cardiovascular issues
             Treatment/Prevention: Regular exercise, healthy diet
