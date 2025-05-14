@@ -20,6 +20,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import ViewHospital from './pages/ViewHospital'
 import EditHospital from './pages/EditHospital'
 import TreatmentReport from './pages/TreatmentReport'
+import AboutUs from './pages/AboutUs';
 
 const App = () => {
   const [formData, setFormData] = useState({
@@ -76,6 +77,7 @@ const App = () => {
         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment />} />
         <Route path='/h-patientdetails/update/:nic/:treatmentId' element={<UpdateTreatment />} />
         <Route path='/treatmentReport/${treatment._id}' element={<TreatmentReport />} />
+        <Route path='/about-us' element={<AboutUs />} />
          
         {/* Remaining routes */}
         <Route path='/innov' element={<Innovate/>} />
