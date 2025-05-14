@@ -17,14 +17,13 @@ router.post('/analyze', async (req, res) => {
             return res.status(400).json({ error: "Prompt is required" });
         }
 
-        
-
+        console.log("Prompt to be sent to Straico API:", prompt);
 
         const response = await axios.post(
             'https://api.straico.com/v1/prompt/completion',
             {
-                models: ["openai/gpt-3.5-turbo-0125"], // Corrected to match Postman
-                message: prompt, // Corrected to match Postman
+                models: ["openai/gpt-3.5-turbo-0125"],
+                message: prompt,
             },
             {
                 headers: {
