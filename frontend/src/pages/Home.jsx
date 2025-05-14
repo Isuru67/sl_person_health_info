@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import videoFile from '../components/home/bvideo.mp4';
@@ -12,7 +11,12 @@ const Home = () => {
   const videoRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-
+  const handleNavigation = (item) => {
+    setActiveNav(item);
+    if (item === 'Contact') {
+      navigate('/contact');
+    }
+  };
   // Enhanced auto-play with intersection observer
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -32,7 +36,6 @@ const Home = () => {
 
     return () => {
       if (videoRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         observer.unobserve(videoRef.current);
       }
     };

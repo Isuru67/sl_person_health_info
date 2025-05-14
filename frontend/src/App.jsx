@@ -20,6 +20,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import ViewHospital from './pages/ViewHospital'
 import EditHospital from './pages/EditHospital'
 import TreatmentReport from './pages/TreatmentReport'
+import Contact from './pages/Contact';
 import AboutUs from './pages/AboutUs';
 
 const App = () => {
@@ -88,6 +89,7 @@ const App = () => {
         <Route path='/hospital-view/:hospitalId' element={<ViewHospital/>} />
         <Route path='/admin-dashboard' element={<AdminDashboard/>} />
         <Route path='/hospital-edit/:hospitalId' element={<EditHospital/>} /> 
+        <Route path='/contact' element={<Contact />} />
     </Routes>
   )
 }
