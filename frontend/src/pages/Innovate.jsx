@@ -57,6 +57,7 @@ function Innovate() {
     const [pdfProcessingStatus, setPdfProcessingStatus] = useState(""); // To show PDF processing status
     const [chartData, setChartData] = useState(null);
     const [chartType, setChartType] = useState('pie');
+    const [ageError, setAgeError] = useState("");
 
     const navItem = {
         hidden: { y: -20, opacity: 0 },
@@ -314,6 +315,13 @@ function Innovate() {
         setError("");
         setResult(null);
 
+        // Add age validation
+        if (age && (age < 0 || !Number.isInteger(parseFloat(age)))) {
+            setError("Please enter a valid age (positive whole number)");
+            setIsLoading(false);
+            return;
+        }
+
         // Check if PDF is uploaded, if not, require fields
         if (!uploadedFile && (!age || !symptoms)) {
             setError("Please fill in all fields or upload a PDF.");
@@ -476,6 +484,18 @@ const formatAnalysisResults = (result) => {
     return sections.map(section => section.trim());
 };
 
+    // Add age validation handler
+    const handleAgeChange = (e) => {
+        const value = e.target.value;
+        if (value < 0) {
+            setAgeError("Age cannot be negative");
+            setAge("");
+        } else {
+            setAgeError("");
+            setAge(value);
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-white">
             {/* Navigation Bar */}
@@ -628,10 +648,14 @@ const formatAnalysisResults = (result) => {
                                     <input
                                         type="number"
                                         value={age}
-                                        onChange={(e) => setAge(e.target.value)}
+                                        onChange={handleAgeChange}
+                                        min="0"
                                         placeholder="Enter age"
                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
+                                    {ageError && (
+                                        <p className="text-red-500 text-xs mt-1">{ageError}</p>
+                                    )}
                                 </div>
 
                                 <div>
