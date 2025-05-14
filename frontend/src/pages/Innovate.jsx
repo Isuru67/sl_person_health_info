@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
-import { User, Bell, Activity, File, FileText, AlertTriangle, Download } from 'lucide-react';
+import { User, Bell, Activity, File, FileText, AlertTriangle, Download, Award, Stethoscope, Brain, Heart, TrendingUp, Calendar } from 'lucide-react';
 import axios from "axios";
 import * as pdfjsLib from 'pdfjs-dist';
 import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Pie, Bar } from 'react-chartjs-2';
+import { Pie, Bar, Radar } from 'react-chartjs-2';
 
 // Register ChartJS components (add this before the Innovate function)
 ChartJS.register(
@@ -44,6 +44,118 @@ const setupPdfWorker = () => {
 
 setupPdfWorker();
 
+const calculateHealthScore = (result) => {
+    if (!result) return null;
+    
+    const risks = result.match(/\[(.*?)\]\s*-\s*(\d+)%/g) || [];
+    if (risks.length === 0) return null;
+
+    const totalRisk = risks.reduce((acc, risk) => {
+        const percentage = parseInt(risk.match(/(\d+)%/)[1]);
+        return acc + percentage;
+    }, 0);
+
+    // Calculate health score (100 - average risk)
+    return Math.max(0, 100 - (totalRisk / risks.length));
+};
+
+const getRecommendations = (healthScore) => {
+    if (!healthScore) return [];
+    
+    const recommendations = [
+        {
+            category: "Lifestyle",
+            items: [
+                "Regular exercise (30 minutes daily)",
+                "Balanced diet rich in nutrients",
+                "Adequate sleep (7-8 hours)",
+                "Stress management techniques"
+            ]
+        },
+        {
+            category: "Medical",
+            items: [
+                "Regular health check-ups",
+                "Blood pressure monitoring",
+                "Cholesterol screening",
+                "Blood sugar testing"
+            ]
+        },
+        {
+            category: "Prevention",
+            items: [
+                "Vaccination updates",
+                "Regular dental check-ups",
+                "Vision examinations",
+                "Mental health counseling"
+            ]
+        }
+    ];
+
+    // Filter recommendations based on health score
+    return recommendations.map(category => ({
+        ...category,
+        items: category.items.filter((_, index) => {
+            if (healthScore < 50) return true; // Show all recommendations
+            if (healthScore < 75) return index < 3; // Show first 3
+            return index < 2; // Show first 2
+        })
+    }));
+};
+
+// Add new component for Health Score
+const HealthScoreGauge = ({ score }) => {
+    const gaugeValue = Math.min(Math.max(score, 0), 100);
+    const color = gaugeValue > 75 ? '#22c55e' : gaugeValue > 50 ? '#eab308' : '#ef4444';
+
+    return (
+        <div className="relative w-48 h-48">
+            <svg className="w-full h-full" viewBox="0 0 100 100">
+                {/* Background circle */}
+                <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="10"
+                />
+                {/* Score circle */}
+                <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="10"
+                    strokeDasharray={`${gaugeValue * 2.83} ${283 - gaugeValue * 2.83}`}
+                    transform="rotate(-90 50 50)"
+                />
+                <text
+                    x="50"
+                    y="50"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="24"
+                    fontWeight="bold"
+                    fill={color}
+                >
+                    {Math.round(gaugeValue)}
+                </text>
+                <text
+                    x="50"
+                    y="65"
+                    textAnchor="middle"
+                    fontSize="12"
+                    fill="#6b7280"
+                >
+                    Health Score
+                </text>
+            </svg>
+        </div>
+    );
+};
+
 function Innovate() {
     const [age, setAge] = useState("");
     const [sex, setSex] = useState("male");
@@ -58,6 +170,9 @@ function Innovate() {
     const [chartData, setChartData] = useState(null);
     const [chartType, setChartType] = useState('pie');
     const [ageError, setAgeError] = useState("");
+    const [healthScore, setHealthScore] = useState(null);
+    const [recommendations, setRecommendations] = useState([]);
+    const [showGlossary, setShowGlossary] = useState(false);
 
     const navItem = {
         hidden: { y: -20, opacity: 0 },
@@ -361,6 +476,14 @@ function Innovate() {
             const answer = response.data.answer;
             setResult(answer);
             
+            // Calculate and set health score
+            const score = calculateHealthScore(answer);
+            setHealthScore(score);
+            
+            // Generate recommendations
+            const recs = getRecommendations(score);
+            setRecommendations(recs);
+            
             // Parse and set chart data
             const parsedChartData = parseRiskPercentages(answer);
             if (parsedChartData) {
@@ -480,7 +603,7 @@ function Innovate() {
         if (chartData) {
             doc.addPage();
             doc.setFont("helvetica", "bold");
-            doc.text("Risk Analysis Visualization", 10, 20);
+            doc.text("Risk Analysis Visualization", 10, yOffset);
             doc.setFont("helvetica", "normal");
 
             // Get the canvas element containing the chart
@@ -517,7 +640,44 @@ function Innovate() {
             }
         }
 
-        // Download the PDF
+        // Add Health Score Section
+        if (healthScore !== null) {
+            doc.addPage();
+            doc.setFont("helvetica", "bold");
+            doc.text("Health Score Analysis", 10, 20);
+            
+            // Add health score gauge image
+            const gaugeElement = document.querySelector('.health-score-gauge canvas');
+            if (gaugeElement) {
+                const gaugeImage = gaugeElement.toDataURL('image/png');
+                doc.addImage(gaugeImage, 'PNG', 70, 30, 60, 60);
+            }
+            
+            // Add recommendations
+            let yPos = 100;
+            doc.text("Personalized Recommendations", 10, yPos);
+            yPos += 10;
+            
+            recommendations.forEach(category => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setFont("helvetica", "bold");
+                doc.text(category.category, 10, yPos);
+                yPos += 10;
+                
+                doc.setFont("helvetica", "normal");
+                category.items.forEach(item => {
+                    doc.text(`• ${item}`, 15, yPos);
+                    yPos += 8;
+                });
+                yPos += 5;
+            });
+        }
+        
+        // Download the enhanced PDF
         doc.save("Health_Analysis_Report.pdf");
     };
 
@@ -944,6 +1104,36 @@ const formatAnalysisResults = (result) => {
                                                     ) : (
                                                         <Bar data={chartData} options={chartOptions} />
                                                     )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Health Score and Recommendations Section */}
+                                        {healthScore !== null && (
+                                            <div className="mt-6 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="flex flex-col items-center">
+                                                        <h3 className="text-lg font-medium text-gray-800 mb-4">Overall Health Score</h3>
+                                                        <HealthScoreGauge score={healthScore} />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-medium text-gray-800 mb-4">Recommendations</h3>
+                                                        <div className="space-y-4">
+                                                            {recommendations.map((category, index) => (
+                                                                <div key={index} className="bg-gray-50 rounded-lg p-4">
+                                                                    <h4 className="font-medium text-gray-700 mb-2">{category.category}</h4>
+                                                                    <ul className="space-y-2">
+                                                                        {category.items.map((item, i) => (
+                                                                            <li key={i} className="flex items-start">
+                                                                                <span className="text-green-500 mr-2">•</span>
+                                                                                {item}
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
