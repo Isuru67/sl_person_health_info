@@ -20,7 +20,7 @@ import TreatmentReportPage from './pages/TreatmentReportPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ViewHospital from './pages/ViewHospital'
 import EditHospital from './pages/EditHospital'
-
+import TreatmentReport from './pages/TreatmentReport'
 
 
 const App = () => {
@@ -80,6 +80,7 @@ const App = () => {
         <Route path='/h-patientdetails/treatment-plan/:nic' element={<TreatmentPlan formData={formData} setFormData={setFormData} />} />
         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment />} />
         <Route path='/h-patientdetails/update/:nic/:treatmentId' element={<UpdateTreatment />} />
+        <Route path='/treatmentReport/${treatment._id}' element={<TreatmentReport />} />
          
         {/* Remaining routes */}
         <Route path='/traetmentreort' element={<TreatmentReportPage />} />
