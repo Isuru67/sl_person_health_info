@@ -176,5 +176,4 @@ router.get('/treatment/stats/:hospitalId', async (req, res) => {
     }
 });
 
-
 export default router;

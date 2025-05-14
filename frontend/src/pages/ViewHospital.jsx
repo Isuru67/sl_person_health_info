@@ -5,6 +5,7 @@ import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import DualNavbar from "../components/layout";
 
 const ViewHospital = () => {
   const [hospital, setHospital] = useState({});
@@ -83,6 +84,7 @@ const ViewHospital = () => {
   const navItems = ['Home', 'Features', 'About Us', 'Contact'];
 
   return (
+    
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
       {/* Fixed Navigation Bar */}
       <motion.header 
