@@ -6,6 +6,67 @@ import Spinner from '../components/Spinner';
 import { motion } from 'framer-motion';
 import { MdLogout } from "react-icons/md"; // Import logout icon
 
+const ImageModal = ({ image, onClose }) => {
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+      onClick={onClose}
+    >
+      <div className="relative max-w-4xl w-full mx-auto">
+        <button
+          className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-75"
+          onClick={onClose}
+        >
+          ×
+        </button>
+        <img
+          src={image}
+          alt="Full size"
+          className="max-w-full max-h-[90vh] object-contain mx-auto rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    </div>
+  );
+};
+
+const ImagePreview = ({ images, title }) => {
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  if (!images || images.length === 0) return <span>No images</span>;
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {images.map((image, index) => (
+        <div key={index} className="relative group cursor-pointer">
+          <div 
+            className="w-24 h-24 relative overflow-hidden rounded-lg border border-gray-200"
+            onClick={() => setSelectedImage(image)}
+          >
+            <img
+              src={image}
+              alt={`${title} ${index + 1}`}
+              className="w-full h-full object-cover transition-transform hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity" />
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-white text-sm font-medium px-2 py-1 bg-black bg-opacity-50 rounded">
+                View
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+      {selectedImage && (
+        <ImageModal 
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
+    </div>
+  );
+};
+
 const ViewPatientProfile = () => {
   const [patient, setPatient] = useState({});
   const [treatments, setTreatments] = useState([]);
@@ -439,10 +500,21 @@ const ViewPatientProfile = () => {
                                   <span className="font-medium">Therapies:</span>{' '}
                                   {treatment.treatmentPlan?.therapies?.join(', ') || 'None'}
                                 </p>
+                                
+                                {/* Add Lab Reports */}
+                                <div className="mt-2">
+                                  <span className="font-medium">Lab Reports:</span>
+                                  <div className="mt-1">
+                                    <ImagePreview 
+                                      images={treatment.treatmentPlan?.te_imaging} 
+                                      title="Lab Report"
+                                    />
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
-                            <div className="mt-2">
+                            <div className="mt-4">
                               <h5 className="font-medium text-gray-700">Medical History</h5>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
                                 <p className="text-sm">
@@ -457,6 +529,17 @@ const ViewPatientProfile = () => {
                                   <span className="font-medium">Surgeries:</span>{' '}
                                   {treatment.medicalHistory?.surgeries?.join(', ') || 'None'}
                                 </p>
+                              </div>
+                              
+                              {/* Add Surgeries Report Images */}
+                              <div className="mt-2">
+                                <span className="font-medium">Surgeries Report Images:</span>
+                                <div className="mt-1">
+                                  <ImagePreview 
+                                    images={treatment.medicalHistory?.su_imaging} 
+                                    title="Surgery Report"
+                                  />
+                                </div>
                               </div>
                             </div>
                           </div>
