@@ -218,40 +218,40 @@ const HospitalRegister = () => {
   };
 
   return (
-    <div className={`flex flex-col min-h-screen bg-gray-50 ${showSuccessPopup ? 'overflow-hidden' : ''}`}>
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Success Popup */}
       {showSuccessPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="bg-blue-50 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border border-blue-100"
+            className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl border-t-4 border-green-500"
           >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-2xl font-bold text-blue-600">Registration Successful</h3>
-              <button 
-                onClick={handleClosePopup}
-                className="text-blue-500 hover:text-blue-700"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <p className="text-blue-700 mb-6">Successfully Registered, Please Sign In</p>
-            <div className="flex justify-end">
+            <div className="flex flex-col items-center text-center">
+              {/* Success Icon */}
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h3>
+              <p className="text-gray-600 mb-6">Your hospital has been successfully registered. Please proceed to login.</p>
+              
               <button
                 onClick={handleClosePopup}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+                className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 font-medium"
               >
-                OK
+                Login Now
               </button>
             </div>
           </motion.div>
         </div>
       )}
 
-      {/* Main Content with conditional blur */}
-      <div className={`${showSuccessPopup ? 'blur-sm' : ''}`}>
+      {/* Main Content */}
+      <div className="w-full">
         {/* Navigation Bar */}
         <motion.header
           initial={{ y: -100 }}

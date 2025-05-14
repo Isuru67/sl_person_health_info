@@ -11,14 +11,12 @@ const Home = () => {
   const videoRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-
   const handleNavigation = (item) => {
     setActiveNav(item);
     if (item === 'Contact') {
       navigate('/contact');
     }
   };
-
   // Enhanced auto-play with intersection observer
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -75,6 +73,13 @@ const Home = () => {
   };
 
   const navItems = ['Home', 'Features', 'About Us', 'Contact'];
+
+  const handleNavigation = (item) => {
+    setActiveNav(item);
+    if (item === 'About Us') {
+      navigate('/about-us');
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-900 to-indigo-900">
