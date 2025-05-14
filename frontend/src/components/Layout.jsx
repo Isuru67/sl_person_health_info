@@ -35,12 +35,16 @@ const DualNavbar = () => {
     return 'hospital';
   };
 
+  // Check if hospital is pending approval
+  const isPending = hospitalInfo.status === 'pending';
+
   return (
     <div className="w-full">
       {/* Top Navigation Bar */}
-      <div className="bg-blue-600 text-white flex justify-between items-center px-6 py-3 shadow-md">
+      <div className="bg-green-600 text-white flex justify-between items-center px-6 py-3 shadow-md">
         <h1 className="text-xl font-bold tracking-wide">
           {hospitalInfo.hospitalName || "Healthcare HIMS"}
+          {isPending && <span className="ml-2 text-sm bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full">Pending Approval</span>}
         </h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -63,27 +67,29 @@ const DualNavbar = () => {
         </div>
       </div>
 
-      {/* Second Navigation Bar - Enhanced Styling */}
-      <div className="bg-blue-500 text-white flex gap-2 py-2 px-4 shadow">
-        {[
-          { name: "Dashboard", icon: <FaTachometerAlt />, path: hospitalInfo.hospitalName ? `/hospitaldashboard/${getHospitalNameForUrl()}` : "/hospitaldashboard" },
-          { name: "Patients", icon: <FaUsers />, path: `/${getHospitalNameForUrl()}/h-patientdetails` },
-          { name: "Reports", icon: <FaFileAlt />, path: "/reports" },
-        ].map((tab) => (
-          <Link
-            key={tab.name}
-            to={tab.path}
-            className={`${
-              activeTab === tab.name.toLowerCase()
-                ? "bg-blue-900 text-white font-semibold shadow-lg"
-                : "hover:bg-blue-600 text-white"
-            } px-4 py-1 rounded-lg flex items-center gap-2 cursor-pointer transition-all duration-300`}
-            onClick={() => setActiveTab(tab.name.toLowerCase())}
-          >
-            {tab.icon} {tab.name}
-          </Link>
-        ))}
-      </div>
+      {/* Second Navigation Bar - Show only if hospital is approved */}
+      {!isPending && (
+        <div className="bg-green-500 text-white flex gap-2 py-2 px-4 shadow">
+          {[
+            { name: "Dashboard", icon: <FaTachometerAlt />, path: hospitalInfo.hospitalName ? `/hospitaldashboard/${getHospitalNameForUrl()}` : "/hospitaldashboard" },
+            { name: "Patients", icon: <FaUsers />, path: `/${getHospitalNameForUrl()}/h-patientdetails` },
+            { name: "Reports", icon: <FaFileAlt />, path: "/reports" },
+          ].map((tab) => (
+            <Link
+              key={tab.name}
+              to={tab.path}
+              className={`${
+                activeTab === tab.name.toLowerCase()
+                  ? "bg-blue-900 text-white font-semibold shadow-lg"
+                  : "hover:bg-blue-600 text-white"
+              } px-4 py-1 rounded-lg flex items-center gap-2 cursor-pointer transition-all duration-300`}
+              onClick={() => setActiveTab(tab.name.toLowerCase())}
+            >
+              {tab.icon} {tab.name}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

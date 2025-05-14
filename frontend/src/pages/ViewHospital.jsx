@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const ViewHospital = () => {
