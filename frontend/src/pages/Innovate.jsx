@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
-import { User, Bell, Activity, File, FileText, AlertTriangle, Download } from 'lucide-react';
+import { User, Bell, Activity, File, FileText, AlertTriangle, Download, Award, Stethoscope, Brain, Heart, TrendingUp, Calendar } from 'lucide-react';
 import axios from "axios";
 import * as pdfjsLib from 'pdfjs-dist';
 import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Pie, Bar } from 'react-chartjs-2';
+import { Pie, Bar, Radar } from 'react-chartjs-2';
 
 // Register ChartJS components (add this before the Innovate function)
 ChartJS.register(
@@ -44,6 +44,118 @@ const setupPdfWorker = () => {
 
 setupPdfWorker();
 
+const calculateHealthScore = (result) => {
+    if (!result) return null;
+    
+    const risks = result.match(/\[(.*?)\]\s*-\s*(\d+)%/g) || [];
+    if (risks.length === 0) return null;
+
+    const totalRisk = risks.reduce((acc, risk) => {
+        const percentage = parseInt(risk.match(/(\d+)%/)[1]);
+        return acc + percentage;
+    }, 0);
+
+    // Calculate health score (100 - average risk)
+    return Math.max(0, 100 - (totalRisk / risks.length));
+};
+
+const getRecommendations = (healthScore) => {
+    if (!healthScore) return [];
+    
+    const recommendations = [
+        {
+            category: "Lifestyle",
+            items: [
+                "Regular exercise (30 minutes daily)",
+                "Balanced diet rich in nutrients",
+                "Adequate sleep (7-8 hours)",
+                "Stress management techniques"
+            ]
+        },
+        {
+            category: "Medical",
+            items: [
+                "Regular health check-ups",
+                "Blood pressure monitoring",
+                "Cholesterol screening",
+                "Blood sugar testing"
+            ]
+        },
+        {
+            category: "Prevention",
+            items: [
+                "Vaccination updates",
+                "Regular dental check-ups",
+                "Vision examinations",
+                "Mental health counseling"
+            ]
+        }
+    ];
+
+    // Filter recommendations based on health score
+    return recommendations.map(category => ({
+        ...category,
+        items: category.items.filter((_, index) => {
+            if (healthScore < 50) return true; // Show all recommendations
+            if (healthScore < 75) return index < 3; // Show first 3
+            return index < 2; // Show first 2
+        })
+    }));
+};
+
+// Add new component for Health Score
+const HealthScoreGauge = ({ score }) => {
+    const gaugeValue = Math.min(Math.max(score, 0), 100);
+    const color = gaugeValue > 75 ? '#22c55e' : gaugeValue > 50 ? '#eab308' : '#ef4444';
+
+    return (
+        <div className="relative w-48 h-48">
+            <svg className="w-full h-full" viewBox="0 0 100 100">
+                {/* Background circle */}
+                <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="10"
+                />
+                {/* Score circle */}
+                <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="10"
+                    strokeDasharray={`${gaugeValue * 2.83} ${283 - gaugeValue * 2.83}`}
+                    transform="rotate(-90 50 50)"
+                />
+                <text
+                    x="50"
+                    y="50"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="24"
+                    fontWeight="bold"
+                    fill={color}
+                >
+                    {Math.round(gaugeValue)}
+                </text>
+                <text
+                    x="50"
+                    y="65"
+                    textAnchor="middle"
+                    fontSize="12"
+                    fill="#6b7280"
+                >
+                    Health Score
+                </text>
+            </svg>
+        </div>
+    );
+};
+
 function Innovate() {
     const [age, setAge] = useState("");
     const [sex, setSex] = useState("male");
@@ -58,6 +170,9 @@ function Innovate() {
     const [chartData, setChartData] = useState(null);
     const [chartType, setChartType] = useState('pie');
     const [ageError, setAgeError] = useState("");
+    const [healthScore, setHealthScore] = useState(null);
+    const [recommendations, setRecommendations] = useState([]);
+    const [showGlossary, setShowGlossary] = useState(false);
 
     const navItem = {
         hidden: { y: -20, opacity: 0 },
@@ -361,6 +476,14 @@ function Innovate() {
             const answer = response.data.answer;
             setResult(answer);
             
+            // Calculate and set health score
+            const score = calculateHealthScore(answer);
+            setHealthScore(score);
+            
+            // Generate recommendations
+            const recs = getRecommendations(score);
+            setRecommendations(recs);
+            
             // Parse and set chart data
             const parsedChartData = parseRiskPercentages(answer);
             if (parsedChartData) {
@@ -420,104 +543,155 @@ function Innovate() {
         const doc = new jsPDF();
         let yOffset = 10;
 
-        // Title
+        // Title and Patient Details
         doc.setFontSize(18);
         doc.text("Health Analysis Report", 10, yOffset);
-        yOffset += 10;
+        yOffset += 15;
 
         // Patient Details Section
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
         doc.text("Patient Details", 10, yOffset);
-        yOffset += 5;
+        yOffset += 7;
         doc.setFont("helvetica", "normal");
         doc.text(`Age: ${age || "Not provided"}`, 10, yOffset);
-        yOffset += 5;
+        yOffset += 7;
         doc.text(`Gender: ${sex}`, 10, yOffset);
-        yOffset += 5;
+        yOffset += 7;
         if (symptoms) {
-            doc.text(`Symptoms: ${symptoms}`, 10, yOffset);
-            yOffset += 5;
+            const symptomsLines = doc.splitTextToSize(`Symptoms: ${symptoms}`, 180);
+            symptomsLines.forEach(line => {
+                doc.text(line, 10, yOffset);
+                yOffset += 7;
+            });
         }
 
-        // Report Generated Section
-        yOffset += 5;
-        doc.setFont("helvetica", "bold");
-        doc.text("Report Generated", 10, yOffset);
-        yOffset += 5;
-        doc.setFont("helvetica", "normal");
-        doc.text(new Date().toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }), 10, yOffset);
-        yOffset += 5;
-        if (uploadedFile) {
-            doc.text(`PDF: ${uploadedFile.name}`, 10, yOffset);
-            yOffset += 5;
-        }
-
-        // Analysis Results Section
-        yOffset += 5;
+        // Analysis Results
+        yOffset += 10;
         doc.setFont("helvetica", "bold");
         doc.text("Analysis Results", 10, yOffset);
-        yOffset += 5;
+        yOffset += 7;
         doc.setFont("helvetica", "normal");
 
-        // Split the result into lines and handle page overflow
-        const lines = doc.splitTextToSize(result, 180);
-        for (let i = 0; i < lines.length; i++) {
-            if (yOffset > 270) {
-                doc.addPage();
-                yOffset = 10;
-            }
-            doc.text(lines[i], 10, yOffset);
-            yOffset += 5;
+        if (result) {
+            const lines = doc.splitTextToSize(result, 180);
+            lines.forEach(line => {
+                if (yOffset > 270) {
+                    doc.addPage();
+                    yOffset = 20;
+                }
+                doc.text(line, 10, yOffset);
+                yOffset += 7;
+            });
         }
 
-        // Add Chart Section
+        // Risk Visualization Section
         if (chartData) {
             doc.addPage();
+            yOffset = 20;
             doc.setFont("helvetica", "bold");
-            doc.text("Risk Analysis Visualization", 10, 20);
-            doc.setFont("helvetica", "normal");
+            doc.text("Risk Analysis Visualization", 10, yOffset);
+            yOffset += 10;
 
-            // Get the canvas element containing the chart
-            const chartElement = document.querySelector('canvas');
-            if (chartElement) {
-                // Convert the chart to an image
-                const chartImage = chartElement.toDataURL('image/png');
+            // Get the chart canvas and convert to image
+            const chartCanvas = document.querySelector('canvas');
+            if (chartCanvas) {
+                // Capture the chart as an image
+                const chartImage = chartCanvas.toDataURL('image/png');
                 
-                // Calculate dimensions to maintain aspect ratio
-                const imgWidth = 190; // Max width for the page
-                const imgHeight = (chartElement.height * imgWidth) / chartElement.width;
-                
-                // Add the chart image to the PDF
-                doc.addImage(chartImage, 'PNG', 10, 30, imgWidth, imgHeight);
+                // Calculate dimensions to fit the page while maintaining aspect ratio
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const aspectRatio = chartCanvas.width / chartCanvas.height;
+                const imgWidth = pageWidth - 20; // Leave 10px margin on each side
+                const imgHeight = imgWidth / aspectRatio;
 
-                // Add legend below the chart
-                let legendY = 30 + imgHeight + 10;
+                // Add the chart image
+                doc.addImage(chartImage, 'PNG', 10, yOffset, imgWidth, imgHeight);
+                yOffset += imgHeight + 20;
+
+                // Add risk percentages as text
                 doc.setFontSize(10);
-                doc.setFont("helvetica", "bold");
-                doc.text("Risk Percentages:", 10, legendY);
-                legendY += 5;
-                doc.setFont("helvetica", "normal");
-
-                // Add the risk percentages as text
                 chartData.labels.forEach((label, index) => {
-                    if (legendY > 270) {
+                    if (yOffset > 270) {
                         doc.addPage();
-                        legendY = 20;
+                        yOffset = 20;
                     }
                     const percentage = chartData.datasets[0].data[index];
-                    doc.text(`${label}: ${percentage}%`, 10, legendY);
-                    legendY += 5;
+                    doc.text(`${label}: ${percentage}%`, 10, yOffset);
+                    yOffset += 7;
                 });
             }
         }
 
-        // Download the PDF
+        // Health Score Section
+        if (healthScore !== null) {
+            doc.addPage();
+            yOffset = 20;
+            doc.setFont("helvetica", "bold");
+            doc.text("Health Score Analysis", 10, yOffset);
+            yOffset += 15;
+
+            // Get the health score gauge element
+            const gaugeElement = document.querySelector('.health-score-gauge svg');
+            if (gaugeElement) {
+                // Convert SVG to canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = gaugeElement.width.baseVal.value;
+                canvas.height = gaugeElement.height.baseVal.value;
+                
+                // Convert SVG to string
+                const svgData = new XMLSerializer().serializeToString(gaugeElement);
+                const img = new Image();
+                
+                // Create a blob URL from the SVG
+                const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+                const url = URL.createObjectURL(svgBlob);
+                
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    const gaugeImage = canvas.toDataURL('image/png');
+                    doc.addImage(gaugeImage, 'PNG', 70, yOffset, 60, 60);
+                    URL.revokeObjectURL(url);
+                };
+                img.src = url;
+            }
+
+            yOffset += 80;
+
+            // Add recommendations
+            doc.setFont("helvetica", "bold");
+            doc.text("Personalized Recommendations", 10, yOffset);
+            yOffset += 10;
+
+            recommendations.forEach(category => {
+                if (yOffset > 250) {
+                    doc.addPage();
+                    yOffset = 20;
+                }
+
+                doc.setFont("helvetica", "bold");
+                doc.text(category.category, 10, yOffset);
+                yOffset += 10;
+
+                doc.setFont("helvetica", "normal");
+                category.items.forEach(item => {
+                    const itemLines = doc.splitTextToSize(`• ${item}`, 180);
+                    itemLines.forEach(line => {
+                        if (yOffset > 270) {
+                            doc.addPage();
+                            yOffset = 20;
+                        }
+                        doc.text(line, 15, yOffset);
+                        yOffset += 7;
+                    });
+                });
+                yOffset += 5;
+            });
+        }
+
+        // Save the PDF
         doc.save("Health_Analysis_Report.pdf");
     };
 
@@ -877,31 +1051,40 @@ const formatAnalysisResults = (result) => {
                                                                 </div>
                                                             ) : section.includes("Future Risk Assessment:") ? (
                                                                 <div className="bg-purple-50 p-4 rounded-lg">
-                                                                    <h4 className="text-purple-800 font-medium mb-2">Future Risk Assessment</h4>
-                                                                    {section.replace("Future Risk Assessment:", "")
-                                                                        .split(/\[.*?\]/)
-                                                                        .filter(Boolean)
-                                                                        .map((condition, i) => (
-                                                                            <div key={i} className="mb-4 last:mb-0">
-                                                                                {condition.includes("%") && (
-                                                                                    <div className="flex items-center justify-between mb-2">
-                                                                                        <span className="font-medium">
-                                                                                            {condition.split('-')[0].trim()}
-                                                                                        </span>
-                                                                                        <span className="text-purple-600 font-bold">
-                                                                                            {condition.match(/\d+%/)?.[0] || "N/A"}
-                                                                                        </span>
+                                                                    <h4 className="text-purple-800 font-medium mb-4">Future Risk Assessment</h4>
+                                                                    <div className="space-y-4">
+                                                                        {section.replace("Future Risk Assessment:", "")
+                                                                            .match(/\[(.*?)\]\s*-\s*(\d+)%([\s\S]*?)(?=\[|$)/g)
+                                                                            ?.map((risk, i) => {
+                                                                                const [_, condition, percentage, details] = risk.match(/\[(.*?)\]\s*-\s*(\d+)%([\s\S]*)/);
+                                                                                const [description, treatment] = details.split(/Description:|Treatment\/Prevention:/).filter(Boolean);
+                                                                                
+                                                                                return (
+                                                                                    <div key={i} className="bg-white rounded-lg p-4 border border-purple-100">
+                                                                                        <div className="flex justify-between items-center border-b border-purple-100 pb-2 mb-3">
+                                                                                            <span className="text-lg font-medium text-purple-900">
+                                                                                                {condition.trim()}
+                                                                                            </span>
+                                                                                            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                                                                                                {percentage}% Risk
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        {description && (
+                                                                                            <div className="mb-2">
+                                                                                                <h5 className="text-sm font-medium text-purple-800 mb-1">Description:</h5>
+                                                                                                <p className="text-sm text-gray-600">{description.trim()}</p>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {treatment && (
+                                                                                            <div>
+                                                                                                <h5 className="text-sm font-medium text-purple-800 mb-1">Treatment/Prevention:</h5>
+                                                                                                <p className="text-sm text-gray-600">{treatment.trim()}</p>
+                                                                                            </div>
+                                                                                        )}
                                                                                     </div>
-                                                                                )}
-                                                                                <div className="text-gray-700 text-sm">
-                                                                                    {condition.split(/Description:|Treatment\/Prevention:/)
-                                                                                        .filter(Boolean)
-                                                                                        .map((text, j) => (
-                                                                                            <p key={j} className="mb-2">{text.trim()}</p>
-                                                                                        ))}
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
+                                                                                );
+                                                                            })}
+                                                                    </div>
                                                                 </div>
                                                             ) : null}
                                                         </div>
@@ -944,6 +1127,36 @@ const formatAnalysisResults = (result) => {
                                                     ) : (
                                                         <Bar data={chartData} options={chartOptions} />
                                                     )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Health Score and Recommendations Section */}
+                                        {healthScore !== null && (
+                                            <div className="mt-6 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="flex flex-col items-center">
+                                                        <h3 className="text-lg font-medium text-gray-800 mb-4">Overall Health Score</h3>
+                                                        <HealthScoreGauge score={healthScore} />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-medium text-gray-800 mb-4">Recommendations</h3>
+                                                        <div className="space-y-4">
+                                                            {recommendations.map((category, index) => (
+                                                                <div key={index} className="bg-gray-50 rounded-lg p-4">
+                                                                    <h4 className="font-medium text-gray-700 mb-2">{category.category}</h4>
+                                                                    <ul className="space-y-2">
+                                                                        {category.items.map((item, i) => (
+                                                                            <li key={i} className="flex items-start">
+                                                                                <span className="text-green-500 mr-2">•</span>
+                                                                                {item}
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
