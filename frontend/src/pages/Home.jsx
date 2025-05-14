@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import videoFile from '../components/home/bvideo.mp4';
@@ -15,6 +16,8 @@ const Home = () => {
     setActiveNav(item);
     if (item === 'Contact') {
       navigate('/contact');
+    } else if (item === 'About Us') {
+      navigate('/about-us');
     }
   };
   // Enhanced auto-play with intersection observer
@@ -73,13 +76,6 @@ const Home = () => {
   };
 
   const navItems = ['Home', 'Features', 'About Us', 'Contact'];
-
-  const handleNavigation = (item) => {
-    setActiveNav(item);
-    if (item === 'About Us') {
-      navigate('/about-us');
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-900 to-indigo-900">
