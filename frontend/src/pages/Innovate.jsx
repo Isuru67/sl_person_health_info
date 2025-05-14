@@ -4,6 +4,19 @@ import { User, Bell, Activity, File, FileText, AlertTriangle, Download } from 'l
 import axios from "axios";
 import * as pdfjsLib from 'pdfjs-dist';
 import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
+import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+// Register ChartJS components (add this before the Innovate function)
+ChartJS.register(
+    ArcElement,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 // Get the PDF.js version and set up the worker
 const setupPdfWorker = () => {
@@ -42,6 +55,8 @@ function Innovate() {
     const [uploadedFile, setUploadedFile] = useState(null);
     const [pdfContent, setPdfContent] = useState(""); // Store extracted PDF content
     const [pdfProcessingStatus, setPdfProcessingStatus] = useState(""); // To show PDF processing status
+    const [chartData, setChartData] = useState(null);
+    const [chartType, setChartType] = useState('pie');
 
     const navItem = {
         hidden: { y: -20, opacity: 0 },
@@ -250,6 +265,49 @@ function Innovate() {
         }
     };
 
+    // Update the parseRiskPercentages function to improve parsing accuracy
+    const parseRiskPercentages = (result) => {
+        if (!result) return null;
+
+        const percentages = [];
+        const conditions = [];
+        const regex = /\[(.*?)\]\s*-\s*(\d+)%/g;
+        let match;
+
+        while ((match = regex.exec(result)) !== null) {
+            conditions.push(match[1].trim());
+            percentages.push(parseInt(match[2]));
+        }
+
+        if (conditions.length === 0) return null;
+
+        return {
+            labels: conditions,
+            datasets: [{
+                label: 'Risk Probability (%)',
+                data: percentages,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                ],
+                borderWidth: 1,
+            }]
+        };
+    };
+
+    // Modify handleSubmit to include chart data parsing
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -290,12 +348,59 @@ function Innovate() {
 
             const answer = response.data.answer;
             setResult(answer);
+            
+            // Parse and set chart data
+            const parsedChartData = parseRiskPercentages(answer);
+            if (parsedChartData) {
+                setChartData(parsedChartData);
+            }
         } catch (error) {
             console.error("Error analyzing health:", error);
             setError("An error occurred while processing your request. Please try again.");
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Update the chart options for better visualization
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                }
+            },
+            title: {
+                display: true,
+                text: 'Health Risk Probabilities',
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                },
+                padding: 20
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `Risk: ${context.parsed}%`
+                }
+            }
+        },
+        ...(chartType === 'bar' && {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Probability (%)'
+                    }
+                }
+            }
+        })
     };
 
     // Function to download the report as a PDF
@@ -362,6 +467,14 @@ function Innovate() {
         // Download the PDF
         doc.save("Health_Analysis_Report.pdf");
     };
+
+    // Add this helper function to format the analysis results
+const formatAnalysisResults = (result) => {
+    if (!result) return null;
+    
+    const sections = result.split(/\d+\./).filter(Boolean);
+    return sections.map(section => section.trim());
+};
 
     return (
         <div className="flex flex-col min-h-screen bg-white">
@@ -629,12 +742,89 @@ function Innovate() {
 
                                         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                                             <h3 className="text-lg font-medium text-gray-800 mb-3">Analysis Results</h3>
-                                            <div className="prose max-w-none text-gray-700">
-                                                {result.split('\n').map((paragraph, i) => (
-                                                    <p key={i} className="mb-3">{paragraph}</p>
-                                                ))}
-                                            </div>
+                                            {result && (
+                                                <div className="space-y-6">
+                                                    {formatAnalysisResults(result).map((section, index) => (
+                                                        <div key={index} className="prose max-w-none">
+                                                            {section.includes("Current Conditions:") ? (
+                                                                <div className="bg-blue-50 p-4 rounded-lg">
+                                                                    <h4 className="text-blue-800 font-medium mb-2">Current Conditions</h4>
+                                                                    <div className="text-gray-700">
+                                                                        {section.replace("Current Conditions:", "").trim()}
+                                                                    </div>
+                                                                </div>
+                                                            ) : section.includes("Future Risk Assessment:") ? (
+                                                                <div className="bg-purple-50 p-4 rounded-lg">
+                                                                    <h4 className="text-purple-800 font-medium mb-2">Future Risk Assessment</h4>
+                                                                    {section.replace("Future Risk Assessment:", "")
+                                                                        .split(/\[.*?\]/)
+                                                                        .filter(Boolean)
+                                                                        .map((condition, i) => (
+                                                                            <div key={i} className="mb-4 last:mb-0">
+                                                                                {condition.includes("%") && (
+                                                                                    <div className="flex items-center justify-between mb-2">
+                                                                                        <span className="font-medium">
+                                                                                            {condition.split('-')[0].trim()}
+                                                                                        </span>
+                                                                                        <span className="text-purple-600 font-bold">
+                                                                                            {condition.match(/\d+%/)?.[0] || "N/A"}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="text-gray-700 text-sm">
+                                                                                    {condition.split(/Description:|Treatment\/Prevention:/)
+                                                                                        .filter(Boolean)
+                                                                                        .map((text, j) => (
+                                                                                            <p key={j} className="mb-2">{text.trim()}</p>
+                                                                                        ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
+
+                                        {/* Add this after the Analysis Results section */}
+                                        {chartData && (
+                                            <div className="mt-6 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h3 className="text-lg font-medium text-gray-800">Risk Visualization</h3>
+                                                    <div className="space-x-2">
+                                                        <button
+                                                            onClick={() => setChartType('pie')}
+                                                            className={`px-3 py-1 rounded ${
+                                                                chartType === 'pie' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            Pie Chart
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setChartType('bar')}
+                                                            className={`px-3 py-1 rounded ${
+                                                                chartType === 'bar' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            Bar Chart
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="w-full h-[400px] flex items-center justify-center">
+                                                    {chartType === 'pie' ? (
+                                                        <Pie data={chartData} options={chartOptions} />
+                                                    ) : (
+                                                        <Bar data={chartData} options={chartOptions} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 p-8">

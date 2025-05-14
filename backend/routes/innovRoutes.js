@@ -9,21 +9,41 @@ const STRAICO_KEY = process.env.STRAICO_KEY; // Make sure the env variable name 
 
 router.post('/analyze', async (req, res) => {
     try {
-        console.log("Received request body:", req.body);
-
-        const { prompt } = req.body; // Extract prompt from the frontend request
+        const { prompt } = req.body;
 
         if (!prompt) {
             return res.status(400).json({ error: "Prompt is required" });
         }
 
-        console.log("Prompt to be sent to Straico API:", prompt);
+        // Structure the prompt for better analysis
+        const structuredPrompt = `
+            Based on the following information:
+            ${prompt}
+            
+            Please provide a structured analysis in the following format:
+
+            1. Current Conditions:
+            - List and briefly explain any current health conditions identified
+            
+            2. Future Risk Assessment:
+            For each condition, use exactly this format:
+            [Condition Name] - XX% (where XX is a number between 0-100)
+            Description: Brief description of the condition
+            Treatment/Prevention: Recommended measures
+            
+            Example format:
+            [Heart Disease] - 35%
+            Description: Risk of developing cardiovascular issues
+            Treatment/Prevention: Regular exercise, healthy diet
+
+            Please ensure all risks are listed with exact percentages in the [Condition] - XX% format.
+        `;
 
         const response = await axios.post(
             'https://api.straico.com/v1/prompt/completion',
             {
                 models: ["openai/gpt-3.5-turbo-0125"],
-                message: prompt,
+                message: structuredPrompt,
             },
             {
                 headers: {
@@ -33,11 +53,7 @@ router.post('/analyze', async (req, res) => {
             }
         );
 
-        console.log("Straico API response:", response.data);
-
-        // Extracting the actual answer from the response
         const answer = response.data?.data?.completions?.["openai/gpt-3.5-turbo-0125"]?.completion?.choices?.[0]?.message?.content || "No answer found";
-
         res.json({ answer });
     } catch (error) {
         console.error('Error analyzing health data:', error.response?.data || error.message);
