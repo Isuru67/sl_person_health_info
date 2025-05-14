@@ -316,10 +316,13 @@ function Innovate() {
         setResult(null);
 
         // Add age validation
-        if (age && (age < 0 || !Number.isInteger(parseFloat(age)))) {
-            setError("Please enter a valid age (positive whole number)");
-            setIsLoading(false);
-            return;
+        if (age) {
+            const ageNum = parseInt(age);
+            if (ageNum < 0 || ageNum > 130 || !Number.isInteger(parseFloat(age))) {
+                setError("Please enter a valid age (0-130 years)");
+                setIsLoading(false);
+                return;
+            }
         }
 
         // Check if PDF is uploaded, if not, require fields
@@ -484,11 +487,14 @@ const formatAnalysisResults = (result) => {
     return sections.map(section => section.trim());
 };
 
-    // Add age validation handler
+    // Update the age validation handler
     const handleAgeChange = (e) => {
         const value = e.target.value;
         if (value < 0) {
             setAgeError("Age cannot be negative");
+            setAge("");
+        } else if (value > 130) {
+            setAgeError("Age cannot exceed 130 years");
             setAge("");
         } else {
             setAgeError("");
