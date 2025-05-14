@@ -52,89 +52,112 @@ const MedicalHistory = ({ formData, setFormData }) => {
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
-            {/* Top Navigation Bar */}
             <DualNavbar />
-
-            <motion.section 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-                className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6"
-            >
-                <motion.form 
-                    onSubmit={handleNext} 
-                    initial={{ scale: 0.9, rotate: -2 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring" }}
-                    className="w-full max-w-lg bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-blue-500"
-                >
-                    <motion.h2 
-                        className="text-center text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600"
-                        initial={{ y: -20 }}
-                        animate={{ y: 0 }}
-                        transition={{ type: "spring" }}
-                    >
-                        Medical History
-                    </motion.h2>
-
-                    {['Allergies', 'Illnesses', 'Medications', 'Surgeries', 'Immunizations'].map((field) => (
-                        <div className="mb-4" key={field}>
-                            <label className="block font-semibold">{field}</label>
-                            <motion.input 
-                                whileFocus={{ scale: 1.02, boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)" }}
-                                type="text" 
-                                name={field.toLowerCase()} 
-                                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
-                                placeholder={field} 
-                                onChange={handleChange} 
-                                required 
-                            />
+            
+            <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-6">
+                {/* Progress Indicator */}
+                <div className="w-full max-w-2xl mb-8">
+                    <div className="flex items-center justify-between relative">
+                        <div className="w-full h-2 bg-gray-200 absolute"></div>
+                        <div className="w-2/3 h-2 bg-blue-600 absolute"></div>
+                        <div className="flex justify-between w-full relative">
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-blue-600 text-white flex items-center justify-center z-10">✓</div>
+                                <span className="text-sm mt-2 font-medium">Admission</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-blue-600 text-white flex items-center justify-center z-10">2</div>
+                                <span className="text-sm mt-2 font-medium">Medical History</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <div className="rounded-full w-8 h-8 bg-gray-300 text-white flex items-center justify-center z-10">3</div>
+                                <span className="text-sm mt-2">Treatment Plan</span>
+                            </div>
                         </div>
-                    ))}
-
-                    <div className="mb-4">
-                        <label className="block font-semibold">Surgeries Report</label>
-                        <motion.input
-                            whileFocus={{ scale: 1.02, boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)" }}
-                            type="file"
-                            accept="image/*"
-                            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                            onChange={handleFileChange}
-                            multiple 
-                        />
-                        {selectedFiles.length > 0 && (
-                            <ul className="mt-2 text-sm text-gray-700">
-                                {selectedFiles.map((file, index) => (
-                                    <li key={index}>📄 {file.name}</li>
-                                ))}
-                            </ul>
-                        )}
                     </div>
+                </div>
 
-                    <div className="flex justify-between mt-4">
-                        <motion.button
-                            whileHover={{ scale: 1.03, backgroundColor: "rgba(75, 85, 99, 0.9)" }}
-                            whileTap={{ scale: 0.98 }}
-                            transition={{ type: "spring", stiffness: 400 }}
-                            className="px-4 py-2 rounded-lg bg-gray-500 text-white font-bold shadow-lg"
-                            type="button"
-                            onClick={() => navigate(-1)}
+                <motion.section 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8 }}
+                    className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6"
+                >
+                    <motion.form 
+                        onSubmit={handleNext} 
+                        initial={{ scale: 0.9, rotate: -2 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring" }}
+                        className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-blue-500"
+                    >
+                        <motion.h2 
+                            className="text-center text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600"
+                            initial={{ y: -20 }}
+                            animate={{ y: 0 }}
+                            transition={{ type: "spring" }}
                         >
-                            Back
-                        </motion.button>
+                            Medical History
+                        </motion.h2>
 
-                        <motion.button
-                            whileHover={{ scale: 1.03, background: "linear-gradient(45deg, #3b82f6, #6366f1)" }}
-                            whileTap={{ scale: 0.98 }}
-                            transition={{ type: "spring", stiffness: 400 }}
-                            className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg"
-                            type="submit"
-                        >
-                            Next
-                        </motion.button>
-                    </div>
-                </motion.form>
-            </motion.section>
+                        {['Allergies', 'Illnesses', 'Medications', 'Surgeries', 'Immunizations'].map((field) => (
+                            <div className="mb-4" key={field}>
+                                <label className="block font-semibold">{field}</label>
+                                <motion.input 
+                                    whileFocus={{ scale: 1.02, boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)" }}
+                                    type="text" 
+                                    name={field.toLowerCase()} 
+                                    className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
+                                    placeholder={field} 
+                                    onChange={handleChange} 
+                                    required={field !== 'Surgeries'} // Only add required if not Surgeries
+                                />
+                            </div>
+                        ))}
+
+                        <div className="mb-4">
+                            <label className="block font-semibold">Surgeries Report</label>
+                            <motion.input
+                                whileFocus={{ scale: 1.02, boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)" }}
+                                type="file"
+                                accept="image/*"
+                                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                onChange={handleFileChange}
+                                multiple 
+                            />
+                            {selectedFiles.length > 0 && (
+                                <ul className="mt-2 text-sm text-gray-700">
+                                    {selectedFiles.map((file, index) => (
+                                        <li key={index}>📄 {file.name}</li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+
+                        <div className="flex justify-between mt-4">
+                            <motion.button
+                                whileHover={{ scale: 1.03, backgroundColor: "rgba(75, 85, 99, 0.9)" }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{ type: "spring", stiffness: 400 }}
+                                className="px-4 py-2 rounded-lg bg-gray-500 text-white font-bold shadow-lg"
+                                type="button"
+                                onClick={() => navigate(-1)}
+                            >
+                                Back
+                            </motion.button>
+
+                            <motion.button
+                                whileHover={{ scale: 1.03, background: "linear-gradient(45deg, #3b82f6, #6366f1)" }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{ type: "spring", stiffness: 400 }}
+                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg"
+                                type="submit"
+                            >
+                                Next
+                            </motion.button>
+                        </div>
+                    </motion.form>
+                </motion.section>
+            </div>
         </div>
     );
 };
