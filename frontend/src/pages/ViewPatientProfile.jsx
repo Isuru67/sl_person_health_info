@@ -76,6 +76,7 @@ const ViewPatientProfile = () => {
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState('Home');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   
   useEffect(() => {
     setLoading(true);
@@ -128,15 +129,21 @@ const ViewPatientProfile = () => {
     return groupedTreatments;
   };
 
-  // Function to filter hospitals based on search term
+  // Function to filter hospitals based on search term and date filter
   const getFilteredTreatmentsByHospital = () => {
     const groupedTreatments = {};
     
     treatments.forEach(treatment => {
       const hospitalName = treatment.hospitalName || 'Unknown Hospital';
+      const treatmentDate = treatment.ho_admissionDetails?.admissionDate 
+        ? new Date(treatment.ho_admissionDetails.admissionDate).toISOString().split('T')[0]
+        : '';
       
-      // Only add to groupedTreatments if hospital name matches search term
-      if (hospitalName.toLowerCase().includes(searchTerm.toLowerCase())) {
+      // Check both hospital name and date filters
+      const matchesHospital = hospitalName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesDate = !dateFilter || treatmentDate === dateFilter;
+      
+      if (matchesHospital && matchesDate) {
         if (!groupedTreatments[hospitalName]) {
           groupedTreatments[hospitalName] = [];
         }
@@ -544,22 +551,40 @@ const ViewPatientProfile = () => {
               >
                 <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-200">
                   <h3 className="text-2xl font-bold text-gray-800">Medical Summary</h3>
-                  <div className="relative w-64">
-                    <input
-                      type="text"
-                      placeholder="Search hospitals..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    {searchTerm && (
-                      <button
-                        onClick={() => setSearchTerm('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        ×
-                      </button>
-                    )}
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-64">
+                      <input
+                        type="text"
+                        placeholder="Search hospitals..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      {searchTerm && (
+                        <button
+                          onClick={() => setSearchTerm('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative w-48">
+                      <input
+                        type="date"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      {dateFilter && (
+                        <button
+                          onClick={() => setDateFilter('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
