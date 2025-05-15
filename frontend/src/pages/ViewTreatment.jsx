@@ -230,12 +230,12 @@ const ViewTreatment = () => {
         });
     }, [nic]);
 
-    // ✅ Working Delete Function for each treatment
+    // Update handleDelete function
     const handleDelete = async (treatmentId) => {
         // Verify this hospital owns the treatment before deleting
         const treatmentToDelete = treatments.find(t => t._id === treatmentId);
         
-        if (treatmentToDelete.hospitalId !== hospitalInfo.hospitalId) {
+        if (!treatmentToDelete || treatmentToDelete.hospitalId !== hospitalInfo.hospitalId) {
             alert("You can only delete treatments added by your hospital.");
             return;
         }
@@ -243,13 +243,24 @@ const ViewTreatment = () => {
         if (!window.confirm("Are you sure you want to delete this treatment record?")) return;
 
         try {
-            const response = await axios.delete(`http://localhost:5555/api/treatments/${treatmentId}`);  // Ensure the correct endpoint for deletion
-            console.log("Delete response:", response);
-            alert("Treatment deleted successfully!");
-            setTreatments(treatments.filter(t => t._id !== treatmentId)); // Remove the deleted treatment from state
+            const response = await axios.delete(
+                `http://localhost:5555/api/treatment/${nic}/${treatmentId}`,
+                {
+                    params: { hospitalId: hospitalInfo.hospitalId }
+                }
+            );
+            
+            if (response.status === 200) {
+                alert("Treatment deleted successfully!");
+                setTreatments(prevTreatments => 
+                    prevTreatments.filter(t => t._id !== treatmentId)
+                );
+            }
         } catch (error) {
-            console.error("Error deleting treatment:", error.response ? error.response.data : error.message);
-            alert(`Error deleting treatment: ${error.response?.data?.message || "Server error"}`);
+            console.error("Error deleting treatment:", error);
+            const errorMessage = error.response?.data?.message || 
+                               "Failed to delete treatment. Please try again.";
+            alert(`Error: ${errorMessage}`);
         }
     };
 

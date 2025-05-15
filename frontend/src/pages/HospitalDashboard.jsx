@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import axios from "axios";
+
 import { useParams, useNavigate } from "react-router-dom";
 import DualNavbar from "../components/layout";
 import { FaUsers, FaFileAlt, FaUserMd, FaClock } from "react-icons/fa";
 import { FiActivity, FiUsers, FiFileText, FiSettings, FiTrendingUp } from 'react-icons/fi';
-import { FiActivity, FiUsers, FiFileText, FiSettings, FiTrendingUp } from 'react-icons/fi';
+
 
 const HospitalDashboard = () => {
   const { hospitalName } = useParams(); // Get hospital name from URL

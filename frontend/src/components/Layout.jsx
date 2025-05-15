@@ -42,7 +42,6 @@ const DualNavbar = () => {
     <div className="w-full">
       {/* Top Navigation Bar */}
       <div className="bg-gradient-to-r from-blue-500 to-indigo-400 text-white flex justify-between items-center px-6 py-3 shadow-md">
-      <div className="bg-green-600 text-white flex justify-between items-center px-6 py-3 shadow-md">
         <h1 className="text-xl font-bold tracking-wide">
           {hospitalInfo.hospitalName || "Healthcare HIMS"}
           {isPending && <span className="ml-2 text-sm bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full">Pending Approval</span>}
