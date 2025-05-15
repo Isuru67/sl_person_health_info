@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { MdLogout } from "react-icons/md"; // Add this import at the top
 
 const AdminDashboard = () => {
   const [hospitals, setHospitals] = useState([]);
@@ -261,6 +262,14 @@ const AdminDashboard = () => {
     </motion.div>
   );
 
+  // Add handleLogout function
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('user');
+    navigate('/admin');
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Navigation Bar */}
@@ -327,6 +336,17 @@ const AdminDashboard = () => {
               >
                 <span className="text-purple-600 font-bold">AD</span>
               </motion.div>
+
+              {/* Add Logout Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200"
+              >
+                <MdLogout className="mr-2" />
+                <span className="hidden md:inline">Logout</span>
+              </motion.button>
             </div>
           </div>
         </div>
