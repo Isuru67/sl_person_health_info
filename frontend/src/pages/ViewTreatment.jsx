@@ -188,6 +188,16 @@ const generateReport = (treatment) => {
 // Uncomment the following line if you want to use it in the component
 // generateReport(treatments[0]); // Pass a treatment object as needed
 
+// Add this helper function to ensure proper array handling
+const ensureArray = (value) => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    // If it's a string, try to split it at commas
+    if (typeof value === 'string') return value.split(',').map(item => item.trim());
+    // For other types, wrap in array
+    return [value];
+};
+
 const ViewTreatment = () => {
     const { nic } = useParams();  // Get NIC from URL
     const [treatments, setTreatments] = useState([]);  // Array to hold multiple treatments
@@ -288,15 +298,39 @@ const ViewTreatment = () => {
                 }
             );
             
-            // Update treatment list with decrypted data
+            // Normalize data structure to ensure arrays are properly formatted
+            const normalizedData = {
+                ...response.data,
+                medicalHistory: {
+                    ...response.data.medicalHistory,
+                    allergies: ensureArray(response.data.medicalHistory?.allergies),
+                    illnesses: ensureArray(response.data.medicalHistory?.illnesses),
+                    medications: ensureArray(response.data.medicalHistory?.medications),
+                    surgeries: ensureArray(response.data.medicalHistory?.surgeries),
+                    immunizations: ensureArray(response.data.medicalHistory?.immunizations),
+                },
+                treatmentPlan: {
+                    ...response.data.treatmentPlan,
+                    medications: ensureArray(response.data.treatmentPlan?.medications),
+                    labTests: ensureArray(response.data.treatmentPlan?.labTests),
+                    therapies: ensureArray(response.data.treatmentPlan?.therapies),
+                },
+                ho_admissionDetails: {
+                    ...response.data.ho_admissionDetails,
+                    admittingPhysician: ensureArray(response.data.ho_admissionDetails?.admittingPhysician),
+                    primaryDiagnosis: ensureArray(response.data.ho_admissionDetails?.primaryDiagnosis),
+                }
+            };
+            
+            // Update treatment list with normalized decrypted data
             const updatedTreatments = treatments.map(treatment => 
-                treatment._id === encryptedTreatmentId ? response.data : treatment
+                treatment._id === encryptedTreatmentId ? normalizedData : treatment
             );
             
             setTreatments(updatedTreatments);
             
-            // Set current treatment to the decrypted one
-            setCurrentTreatment(response.data);
+            // Set current treatment to the normalized decrypted one
+            setCurrentTreatment(normalizedData);
             setShowDecryptModal(false);
         } catch (error) {
             console.error('Decryption error:', error);
@@ -500,10 +534,10 @@ const ViewTreatment = () => {
                                                     : "N/A"}
                                             </td>
                                             <td className="px-4 py-2 border">
-                                                {currentTreatment.ho_admissionDetails?.admittingPhysician?.join(", ") || "N/A"}
+                                                {ensureArray(currentTreatment.ho_admissionDetails?.admittingPhysician).join(", ") || "N/A"}
                                             </td>
                                             <td className="px-4 py-2 border">
-                                                {currentTreatment.ho_admissionDetails?.primaryDiagnosis?.join(", ") || "N/A"}
+                                                {ensureArray(currentTreatment.ho_admissionDetails?.primaryDiagnosis).join(", ") || "N/A"}
                                             </td>
                                         </tr>
                                     </tbody>
@@ -524,17 +558,27 @@ const ViewTreatment = () => {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td className="px-4 py-2 border">{currentTreatment.medicalHistory?.allergies?.join(", ") || "None"}</td>
-                                            <td className="px-4 py-2 border">{currentTreatment.medicalHistory?.illnesses?.join(", ") || "None"}</td>
-                                            <td className="px-4 py-2 border">{currentTreatment.medicalHistory?.medications?.join(", ") || "None"}</td>
-                                            <td className="px-4 py-2 border">{currentTreatment.medicalHistory?.surgeries?.join(", ") || "None"}</td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.medicalHistory?.allergies).join(", ") || "None"}
+                                            </td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.medicalHistory?.illnesses).join(", ") || "None"}
+                                            </td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.medicalHistory?.medications).join(", ") || "None"}
+                                            </td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.medicalHistory?.surgeries).join(", ") || "None"}
+                                            </td>
                                             <td className="px-4 py-2 border">
                                                 <ImagePreview 
                                                     images={currentTreatment.medicalHistory?.su_imaging} 
                                                     title="Surgery Report"
                                                 />
                                             </td>
-                                            <td className="px-4 py-2 border">{currentTreatment.medicalHistory?.immunizations?.join(", ") || "None"}</td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.medicalHistory?.immunizations).join(", ") || "None"}
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -552,15 +596,21 @@ const ViewTreatment = () => {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td className="px-4 py-2 border">{currentTreatment.treatmentPlan?.medications?.join(", ") || "None"}</td>
-                                            <td className="px-4 py-2 border">{currentTreatment.treatmentPlan?.labTests?.join(", ") || "None"}</td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.treatmentPlan?.medications).join(", ") || "None"}
+                                            </td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.treatmentPlan?.labTests).join(", ") || "None"}
+                                            </td>
                                             <td className="px-4 py-2 border">
                                                 <ImagePreview 
                                                     images={currentTreatment.treatmentPlan?.te_imaging} 
                                                     title="Lab Report"
                                                 />
                                             </td>
-                                            <td className="px-4 py-2 border">{currentTreatment.treatmentPlan?.therapies?.join(", ") || "None"}</td>
+                                            <td className="px-4 py-2 border">
+                                                {ensureArray(currentTreatment.treatmentPlan?.therapies).join(", ") || "None"}
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>

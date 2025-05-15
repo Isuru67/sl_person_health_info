@@ -33,31 +33,31 @@ const patient_hSchema = new Schema({
         iv: {
             type: String,
             required: true
-        },
-        authTag: {
-            type: String,
-            required: true
         }
     },
     
     // Hospital access package
     hospitalAccess: {
         encryptedKey: {
-            encryptedData: String,
-            iv: String,
-            authTag: String
+            type: String,
+            required: true
         },
-        salt: String
+        iv: {
+            type: String,
+            required: true
+        }
     },
     
     // Patient access package
     patientAccess: {
         encryptedKey: {
-            encryptedData: String,
-            iv: String,
-            authTag: String
+            type: String,
+            required: true
         },
-        salt: String
+        iv: {
+            type: String,
+            required: true
+        }
     },
     
     // Non-sensitive metadata (can be used for filtering without decryption)

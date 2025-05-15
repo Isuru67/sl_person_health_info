@@ -152,52 +152,76 @@ export const decryptRecordKey = (encryptedKeyPackage, derivedKey) => {
   }
 };
 
-/**
- * Create a complete dual-encrypted package for a treatment record
- * @param {Object} data - The treatment data to encrypt
- * @param {string} hospitalPassword - The hospital's password
- * @param {string} patientPassword - The patient's password
- * @returns {Object} - Complete encrypted package with dual keys
- */
-export const createEncryptedRecord = (data, hospitalPassword, patientPassword) => {
-  // Generate random salts
-  const hospitalSalt = crypto.randomBytes(SALT_LENGTH).toString('hex');
-  const patientSalt = crypto.randomBytes(SALT_LENGTH).toString('hex');
-  
-  // Derive keys from passwords
-  const hospitalKey = deriveKeyFromPassword(hospitalPassword, hospitalSalt);
-  const patientKey = deriveKeyFromPassword(patientPassword, patientSalt);
-  
-  // Generate a random record key
-  const recordKey = generateRecordKey();
-  
-  // Encrypt the record key twice
-  const hospitalEncryptedKey = encryptRecordKey(recordKey, hospitalKey);
-  const patientEncryptedKey = encryptRecordKey(recordKey, patientKey);
-  
-  // Encrypt the data with the record key
-  const encryptedData = encryptWithKey(data, recordKey);
-  
-  // Return the complete package
+// Function to encrypt a string (used for key encryption)
+const encryptString = (text, password) => {
+  // Create a key from password
+  const key = crypto.scryptSync(password, 'salt', 32);
+  // Create initialization vector
+  const iv = crypto.randomBytes(16);
+  // Create cipher
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  // Encrypt the data
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  // Return the encrypted data and iv
   return {
-    encryptedData,
+    encrypted,
+    iv: iv.toString('hex')
+  };
+};
+
+// Function to decrypt a string (used for key decryption)
+const decryptString = (encryptedText, iv, password) => {
+  try {
+    // Create a key from password
+    const key = crypto.scryptSync(password, 'salt', 32);
+    // Create decipher
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(iv, 'hex'));
+    // Decrypt the data
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return null;
+  }
+};
+
+// Encryption function for creating an encrypted record with dual access
+export const createEncryptedRecord = (data, hospitalPassword, patientPassword) => {
+  // Generate a random symmetric key for encrypting the actual data
+  const symmetricKey = crypto.randomBytes(32).toString('hex');
+  
+  // Convert data to string for encryption
+  const dataString = JSON.stringify(data);
+  
+  // Encrypt the data using the symmetric key
+  const encryptedData = encryptString(dataString, symmetricKey);
+  
+  // Encrypt the symmetric key with hospital password
+  const hospitalKeyEncryption = encryptString(symmetricKey, hospitalPassword);
+  
+  // Encrypt the symmetric key with patient password
+  const patientKeyEncryption = encryptString(symmetricKey, patientPassword);
+  
+  // Return the encrypted package
+  return {
+    encryptedData: {
+      encryptedData: encryptedData.encrypted,
+      iv: encryptedData.iv
+    },
     hospitalAccess: {
-      encryptedKey: hospitalEncryptedKey,
-      salt: hospitalSalt
+      encryptedKey: hospitalKeyEncryption.encrypted,
+      iv: hospitalKeyEncryption.iv
     },
     patientAccess: {
-      encryptedKey: patientEncryptedKey,
-      salt: patientSalt
+      encryptedKey: patientKeyEncryption.encrypted,
+      iv: patientKeyEncryption.iv
     }
   };
 };
 
-/**
- * Decrypt a record using either hospital or patient credentials
- * @param {Object} encryptedRecord - The complete encrypted record
- * @param {Object} credentials - Object with role and password
- * @returns {Object|null} - Decrypted data or null
- */
+// Decryption function to handle the encrypted data
 export const decryptRecord = (treatmentRecord, credentials) => {
   try {
     const { role, password } = credentials;
@@ -205,74 +229,48 @@ export const decryptRecord = (treatmentRecord, credentials) => {
     console.log(`Attempting to decrypt record with role: ${role}`);
     
     // Choose the correct access key based on role
-    const accessPackage = role === 'hospital' 
-      ? treatmentRecord.hospitalAccess 
-      : treatmentRecord.patientAccess;
+    const accessKey = role === 'hospital' 
+      ? { 
+          encryptedKey: treatmentRecord.hospitalAccess.encryptedKey,
+          iv: treatmentRecord.hospitalAccess.iv 
+        }
+      : { 
+          encryptedKey: treatmentRecord.patientAccess.encryptedKey, 
+          iv: treatmentRecord.patientAccess.iv 
+        };
     
-    if (!accessPackage) {
-      console.log(`No access package found for role: ${role}`);
+    if (!accessKey.encryptedKey || !accessKey.iv) {
+      console.log(`No access key found for role: ${role}`);
       return null;
     }
     
-    // Get the encrypted content
-    const { encryptedData } = treatmentRecord.encryptedData;
+    // Decrypt the symmetric key using the password
+    const symmetricKey = decryptString(accessKey.encryptedKey, accessKey.iv, password);
     
-    // For testing purposes, add a backdoor to decrypt with a special password
-    if (password === 'master_decrypt_key_123') { // REMOVE IN PRODUCTION
-      console.log('Using master decrypt key');
-      // Return dummy data structure for testing
-      return {
-        ho_admissionDetails: {
-          admissionDate: new Date(),
-          admittingPhysician: ['Dr. Test'],
-          primaryDiagnosis: ['Test Diagnosis']
-        },
-        medicalHistory: {
-          allergies: ['None'],
-          illnesses: ['None'],
-          medications: ['Test Med'],
-          surgeries: [],
-          su_imaging: []
-        },
-        treatmentPlan: {
-          medications: ['Test Med'],
-          labTests: ['Test Lab'],
-          te_imaging: [],
-          therapies: ['Test Therapy']
-        }
-      };
+    if (!symmetricKey) {
+      console.log('Failed to decrypt symmetric key - invalid password');
+      return null;
     }
     
-    // Try to decrypt using the proper decryption method
+    // Use the symmetric key to decrypt the actual data
+    const decryptedDataString = decryptString(
+      treatmentRecord.encryptedData.encryptedData,
+      treatmentRecord.encryptedData.iv,
+      symmetricKey
+    );
+    
+    if (!decryptedDataString) {
+      console.log('Failed to decrypt data - corrupted data or invalid key');
+      return null;
+    }
+    
+    // Parse the decrypted data string back to an object
     try {
-      // Use your actual decryption implementation here
-      
-      // For this example, we'll simulate successful decryption
-      console.log('Decryption successful');
-      
-      // Return a dummy data structure if you don't have the actual decryption logic
-      return {
-        ho_admissionDetails: {
-          admissionDate: treatmentRecord.metadata?.admissionDate || new Date(),
-          admittingPhysician: ['Encrypted Physician'],
-          primaryDiagnosis: ['Encrypted Diagnosis']
-        },
-        medicalHistory: {
-          allergies: ['Encrypted Allergies'],
-          illnesses: ['Encrypted Illnesses'],
-          medications: ['Encrypted Medications'],
-          surgeries: [],
-          su_imaging: []
-        },
-        treatmentPlan: {
-          medications: ['Encrypted Medications'],
-          labTests: ['Encrypted Tests'],
-          te_imaging: [],
-          therapies: ['Encrypted Therapies']
-        }
-      };
-    } catch (error) {
-      console.error('Error during decryption:', error);
+      const decryptedData = JSON.parse(decryptedDataString);
+      console.log('Successfully decrypted treatment data');
+      return decryptedData;
+    } catch (parseError) {
+      console.error('Error parsing decrypted data:', parseError);
       return null;
     }
   } catch (error) {
@@ -280,3 +278,19 @@ export const decryptRecord = (treatmentRecord, credentials) => {
     return null;
   }
 };
+
+// Helper function to ensure arrays
+function ensureArrayFormat(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    // If it's a comma-separated string, split it
+    if (value.includes(',')) {
+      return value.split(',').map(item => item.trim());
+    }
+    // Otherwise just wrap the string in an array
+    return [value];
+  }
+  // For any other type, wrap in array
+  return [value];
+}
