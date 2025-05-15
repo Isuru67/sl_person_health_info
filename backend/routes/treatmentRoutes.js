@@ -95,14 +95,28 @@ router.put('/treatment/:nic/:treatmentId', async (req, res) => {
     }
 });
 
-// Use patient NIC in the route
-router.delete('/treatments/:nic', async (req, res) => {
+// Update the delete route
+router.delete('/treatment/:nic/:treatmentId', async (req, res) => {
     try {
-        const deletedTreatment = await Treatment.findOneAndDelete({ patient_nic: req.params.nic });
+        const { nic, treatmentId } = req.params;
+        const { hospitalId } = req.query;
+
+        const deletedTreatment = await Treatment.findOneAndDelete({
+            _id: treatmentId,
+            patient_nic: nic,
+            hospitalId: hospitalId
+        });
+
         if (!deletedTreatment) {
-            return res.status(404).json({ message: 'Treatment not found for this NIC' });
+            return res.status(404).json({ 
+                message: 'Treatment not found or you do not have permission to delete it' 
+            });
         }
-        res.json({ message: 'Treatment deleted successfully' });
+
+        res.status(200).json({ 
+            message: 'Treatment deleted successfully',
+            deletedTreatment 
+        });
     } catch (error) {
         console.error('Error deleting treatment:', error);
         res.status(500).json({ message: 'Error deleting treatment' });
@@ -175,6 +189,5 @@ router.get('/treatment/stats/:hospitalId', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-
 
 export default router;
