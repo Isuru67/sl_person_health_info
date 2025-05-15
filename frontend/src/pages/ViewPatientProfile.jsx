@@ -77,9 +77,26 @@ const ViewPatientProfile = () => {
   const [activeNav, setActiveNav] = useState('Home');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [showDecryptPrompt, setShowDecryptPrompt] = useState(false);
+  const [decryptPassword, setDecryptPassword] = useState('');
+  const [decryptError, setDecryptError] = useState('');
+  const [decryptRole, setDecryptRole] = useState('');
+  const [treatmentToDecrypt, setTreatmentToDecrypt] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   
   useEffect(() => {
     setLoading(true);
+    
+    // Determine user role on component mount
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const hospitalData = JSON.parse(localStorage.getItem('hospitalData') || '{}');
+    
+    if (hospitalData && hospitalData.hospitalId) {
+      setUserRole('hospital');
+    } else if (userInfo && userInfo.nic) {
+      setUserRole('patient');
+    }
+    
     axios
       .get(`http://localhost:5555/patient/${id}`)
       .then((response) => {
@@ -100,8 +117,23 @@ const ViewPatientProfile = () => {
   // Fetch all treatments for this patient (from all hospitals)
   const fetchPatientTreatments = (nic) => {
     setTreatmentsLoading(true);
+    
+    // Determine requester role and get credentials if available
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    
+    // Build request URL
+    let url = `http://localhost:5555/api/treatment/${nic}`;
+    
+    // Include role as patient for this view
+    url += `?role=patient`;
+    
+    // If we have stored password, attempt auto-decryption
+    if (userInfo.password) {
+      url += `&password=${encodeURIComponent(userInfo.password)}`;
+    }
+    
     axios
-      .get(`http://localhost:5555/api/treatment/${nic}`)
+      .get(url)
       .then((response) => {
         setTreatments(response.data);
         setTreatmentsLoading(false);
@@ -266,6 +298,160 @@ const ViewPatientProfile = () => {
       age--;
     }
     return age;
+  };
+
+  // Handle clicking on an encrypted treatment
+  const handleDecryptRequest = (treatment) => {
+    setTreatmentToDecrypt(treatment);
+    setDecryptRole('patient'); // Always use patient role in patient view
+    setDecryptPassword('');
+    setDecryptError('');
+    
+    // Get patient password if available
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    
+    if (userInfo.password && userInfo.nic === patient.nic) {
+      // Try auto-decrypt with stored patient password
+      handleDecryptWithPassword(userInfo.password);
+    } else {
+      // Ask for password if not available
+      setShowDecryptPrompt(true);
+    }
+  };
+
+  // New function for handling decryption with a provided password
+  const handleDecryptWithPassword = (password) => {
+    if (!password || !treatmentToDecrypt) {
+      setDecryptError('Password is required');
+      return;
+    }
+    
+    setTreatmentsLoading(true);
+    setDecryptError('');
+    
+    const url = `http://localhost:5555/api/treatment/${patient.nic}/${treatmentToDecrypt._id}/decrypt`;
+    
+    // Always use patient role in the patient profile view
+    axios.post(url, {
+      password: password,
+      role: 'patient'
+    })
+    .then(response => {
+      // Replace the encrypted treatment with decrypted one
+      const updatedTreatments = treatments.map(treatment => 
+        treatment._id === treatmentToDecrypt._id ? response.data : treatment
+      );
+      
+      setTreatments(updatedTreatments);
+      setShowDecryptPrompt(false);
+      setTreatmentsLoading(false);
+    })
+    .catch(error => {
+      console.error('Decryption error:', error);
+      
+      // Display more specific error messages
+      let errorMessage = 'Failed to decrypt record. Incorrect password.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setDecryptError(errorMessage);
+      setTreatmentsLoading(false);
+      setShowDecryptPrompt(true);
+    });
+  };
+
+  // Submit decryption request when user enters password manually
+  const handleDecryptSubmit = () => {
+    handleDecryptWithPassword(decryptPassword);
+  };
+
+  // Decryption prompt modal - improved version
+  const DecryptPrompt = () => {
+    if (!showDecryptPrompt) return null;
+    
+    // Ensure focus is set to password input when modal opens
+    React.useEffect(() => {
+      const passwordInput = document.getElementById('decrypt-password-input');
+      if (passwordInput) {
+        setTimeout(() => {
+          passwordInput.focus();
+        }, 50);
+      }
+    }, []);
+    
+    // Prevent modal closing when clicking inside the modal
+    const handleModalClick = (e) => {
+      e.stopPropagation();
+    };
+    
+    // Handle Enter key press
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleDecryptSubmit();
+      }
+    };
+    
+    return (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4"
+        onClick={() => setShowDecryptPrompt(false)}
+      >
+        <div 
+          className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative"
+          onClick={handleModalClick}
+        >
+          <button 
+            onClick={() => setShowDecryptPrompt(false)}
+            className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+            type="button"
+          >
+            ✕
+          </button>
+          
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Decrypt Medical Record</h3>
+          <p className="text-gray-600 mb-6">
+            This record is encrypted for your privacy. Please enter your 
+            {decryptRole === 'hospital' ? ' hospital ' : ' patient '}
+            password to view the details.
+          </p>
+          
+          <div className="mb-4">
+            <input
+              id="decrypt-password-input"
+              type="password"
+              value={decryptPassword}
+              onChange={(e) => setDecryptPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter password"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+            />
+            {decryptError && (
+              <p className="text-red-500 text-sm mt-1">{decryptError}</p>
+            )}
+          </div>
+          
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowDecryptPrompt(false)}
+              className="px-4 py-2 text-gray-600 mr-2"
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDecryptSubmit}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              type="button"
+            >
+              Decrypt
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Animation variants
@@ -649,81 +835,128 @@ const ViewPatientProfile = () => {
                         <div className="p-4">
                           {hospitalTreatments.map((treatment, index) => (
                             <div key={treatment._id} className={`p-4 ${index > 0 ? 'border-t border-gray-200 mt-4' : ''}`}>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <h5 className="font-medium text-gray-700">Admission Details</h5>
-                                  <p className="text-sm mt-1">
-                                    <span className="font-medium">Date:</span>{' '}
-                                    {treatment.ho_admissionDetails?.admissionDate
-                                      ? new Date(treatment.ho_admissionDetails.admissionDate).toLocaleDateString()
-                                      : 'N/A'}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Physician:</span>{' '}
-                                    {treatment.ho_admissionDetails?.admittingPhysician?.join(', ') || 'N/A'}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Diagnosis:</span>{' '}
-                                    {treatment.ho_admissionDetails?.primaryDiagnosis?.join(', ') || 'N/A'}
-                                  </p>
-                                </div>
-                                
-                                <div>
-                                  <h5 className="font-medium text-gray-700">Treatment Plan</h5>
-                                  <p className="text-sm mt-1">
-                                    <span className="font-medium">Medications:</span>{' '}
-                                    {treatment.treatmentPlan?.medications?.join(', ') || 'None'}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Lab Tests:</span>{' '}
-                                    {treatment.treatmentPlan?.labTests?.join(', ') || 'None'}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Therapies:</span>{' '}
-                                    {treatment.treatmentPlan?.therapies?.join(', ') || 'None'}
-                                  </p>
-                                  
-                                  {/* Add Lab Reports */}
-                                  <div className="mt-2">
-                                    <span className="font-medium">Lab Reports:</span>
-                                    <div className="mt-1">
-                                      <ImagePreview 
-                                        images={treatment.treatmentPlan?.te_imaging} 
-                                        title="Lab Report"
-                                      />
+                              
+                              {/* Handle encrypted treatments */}
+                              {treatment.isEncrypted && (
+                                <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <h5 className="font-medium text-gray-700">Encrypted Treatment Record</h5>
+                                      <p className="text-sm text-gray-500">
+                                        Date: {treatment.metadata?.admissionDate 
+                                          ? new Date(treatment.metadata.admissionDate).toLocaleDateString() 
+                                          : 'Unknown'}
+                                      </p>
+                                    </div>
+                                    
+                                    <div className="flex">
+                                      <button
+                                        onClick={() => handleDecryptRequest(treatment, 'patient')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Decrypt
+                                      </button>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-
-                              <div className="mt-4">
-                                <h5 className="font-medium text-gray-700">Medical History</h5>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
-                                  <p className="text-sm">
-                                    <span className="font-medium">Allergies:</span>{' '}
-                                    {treatment.medicalHistory?.allergies?.join(', ') || 'None'}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Illnesses:</span>{' '}
-                                    {treatment.medicalHistory?.illnesses?.join(', ') || 'None'}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Surgeries:</span>{' '}
-                                    {treatment.medicalHistory?.surgeries?.join(', ') || 'None'}
+                              )}
+                              
+                              {/* Show decryption failed message */}
+                              {treatment.decryptionFailed && (
+                                <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-4">
+                                  <p className="text-red-700 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Decryption failed. Please try again with the correct password.
                                   </p>
                                 </div>
-                                
-                                {/* Add Surgeries Report Images */}
-                                <div className="mt-2">
-                                  <span className="font-medium">Surgeries Report Images:</span>
-                                  <div className="mt-1">
-                                    <ImagePreview 
-                                      images={treatment.medicalHistory?.su_imaging} 
-                                      title="Surgery Report"
-                                    />
+                              )}
+                              
+                              {/* Show successfully decrypted data */}
+                              {!treatment.isEncrypted && (
+                                <div>
+                                  {/* Standard treatment display code as before */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <h5 className="font-medium text-gray-700">Admission Details</h5>
+                                      <p className="text-sm mt-1">
+                                        <span className="font-medium">Date:</span>{' '}
+                                        {treatment.ho_admissionDetails?.admissionDate
+                                          ? new Date(treatment.ho_admissionDetails.admissionDate).toLocaleDateString()
+                                          : 'N/A'}
+                                      </p>
+                                      <p className="text-sm">
+                                        <span className="font-medium">Physician:</span>{' '}
+                                        {treatment.ho_admissionDetails?.admittingPhysician?.join(', ') || 'N/A'}
+                                      </p>
+                                      <p className="text-sm">
+                                        <span className="font-medium">Diagnosis:</span>{' '}
+                                        {treatment.ho_admissionDetails?.primaryDiagnosis?.join(', ') || 'N/A'}
+                                      </p>
+                                    </div>
+                                    
+                                    <div>
+                                      <h5 className="font-medium text-gray-700">Treatment Plan</h5>
+                                      <p className="text-sm mt-1">
+                                        <span className="font-medium">Medications:</span>{' '}
+                                        {treatment.treatmentPlan?.medications?.join(', ') || 'None'}
+                                      </p>
+                                      <p className="text-sm">
+                                        <span className="font-medium">Lab Tests:</span>{' '}
+                                        {treatment.treatmentPlan?.labTests?.join(', ') || 'None'}
+                                      </p>
+                                      <p className="text-sm">
+                                        <span className="font-medium">Therapies:</span>{' '}
+                                        {treatment.treatmentPlan?.therapies?.join(', ') || 'None'}
+                                      </p>
+                                      
+                                      {/* Add Lab Reports */}
+                                      <div className="mt-2">
+                                        <span className="font-medium">Lab Reports:</span>
+                                        <div className="mt-1">
+                                          <ImagePreview 
+                                            images={treatment.treatmentPlan?.te_imaging} 
+                                            title="Lab Report"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-4">
+                                    <h5 className="font-medium text-gray-700">Medical History</h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                                      <p className="text-sm">
+                                        <span className="font-medium">Allergies:</span>{' '}
+                                        {treatment.medicalHistory?.allergies?.join(', ') || 'None'}
+                                      </p>
+                                      <p className="text-sm">
+                                        <span className="font-medium">Illnesses:</span>{' '}
+                                        {treatment.medicalHistory?.illnesses?.join(', ') || 'None'}
+                                      </p>
+                                      <p className="text-sm">
+                                        <span className="font-medium">Surgeries:</span>{' '}
+                                        {treatment.medicalHistory?.surgeries?.join(', ') || 'None'}
+                                      </p>
+                                    
+                                      {/* Add Surgeries Report Images */}
+                                      <div className="mt-2">
+                                        <span className="font-medium">Surgeries Report Images:</span>
+                                        <div className="mt-1">
+                                          <ImagePreview 
+                                            images={treatment.medicalHistory?.su_imaging} 
+                                            title="Surgery Report"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -751,6 +984,9 @@ const ViewPatientProfile = () => {
           )}
         </div>
       </div>
+
+      {/* Add DecryptPrompt component */}
+      <DecryptPrompt />
 
       {/* Footer */}
       <motion.footer 
