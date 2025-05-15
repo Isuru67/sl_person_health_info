@@ -41,7 +41,9 @@ const DualNavbar = () => {
   return (
     <div className="w-full">
       {/* Top Navigation Bar */}
-      <div className="bg-green-600 text-white flex justify-between items-center px-6 py-3 shadow-md">
+
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-400 text-white flex justify-between items-center px-6 py-3 shadow-md">
+
         <h1 className="text-xl font-bold tracking-wide">
           {hospitalInfo.hospitalName || "Healthcare HIMS"}
           {isPending && <span className="ml-2 text-sm bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full">Pending Approval</span>}
@@ -69,7 +71,9 @@ const DualNavbar = () => {
 
       {/* Second Navigation Bar - Show only if hospital is approved */}
       {!isPending && (
-        <div className="bg-green-500 text-white flex gap-2 py-2 px-4 shadow">
+
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-400 text-white flex gap-2 py-2 px-4 shadow">
+
           {[
             { name: "Dashboard", icon: <FaTachometerAlt />, path: hospitalInfo.hospitalName ? `/hospitaldashboard/${getHospitalNameForUrl()}` : "/hospitaldashboard" },
             { name: "Patients", icon: <FaUsers />, path: `/${getHospitalNameForUrl()}/h-patientdetails` },

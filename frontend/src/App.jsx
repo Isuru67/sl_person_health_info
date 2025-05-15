@@ -16,12 +16,12 @@ import ViewTreatment from './pages/ViewTreatment'
 import UpdateTreatment  from './pages/UpdateTreatment'
 import Innovate from './pages/Innovate';
 import HospitalRegister from './pages/HospitalRegister'
-import TreatmentReportPage from './pages/TreatmentReportPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ViewHospital from './pages/ViewHospital'
 import EditHospital from './pages/EditHospital'
 import TreatmentReport from './pages/TreatmentReport'
-
+import Contact from './pages/Contact';
+import AboutUs from './pages/AboutUs';
 
 const App = () => {
   const [formData, setFormData] = useState({
@@ -81,14 +81,15 @@ const App = () => {
         <Route path='/h-patientdetails/view/:nic' element={<ViewTreatment />} />
         <Route path='/h-patientdetails/update/:nic/:treatmentId' element={<UpdateTreatment />} />
         <Route path='/treatmentReport/${treatment._id}' element={<TreatmentReport />} />
+        <Route path='/about-us' element={<AboutUs />} />
          
         {/* Remaining routes */}
-        <Route path='/traetmentreort' element={<TreatmentReportPage />} />
         <Route path='/innov' element={<Innovate/>} />
         <Route path='/hospital-register' element={<HospitalRegister/>} />
         <Route path='/hospital-view/:hospitalId' element={<ViewHospital/>} />
         <Route path='/admin-dashboard' element={<AdminDashboard/>} />
         <Route path='/hospital-edit/:hospitalId' element={<EditHospital/>} /> 
+        <Route path='/contact' element={<Contact />} />
     </Routes>
   )
 }

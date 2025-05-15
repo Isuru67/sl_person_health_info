@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
 import { motion } from 'framer-motion';
-import { MdLogout, MdPrint } from "react-icons/md"; // Add MdPrint icon
+import { MdLogout, MdPrint, MdAnalytics } from "react-icons/md"; // Add MdAnalytics icon
 
 const ImageModal = ({ image, onClose }) => {
   return (
@@ -242,6 +242,32 @@ const ViewPatientProfile = () => {
     window.location.reload();
   };
 
+  // Add handleAnalyze function
+  const handleAnalyze = () => {
+    navigate('/innov', { 
+      state: { 
+        patientData: {
+          age: patient.dob ? calculateAge(patient.dob) : '',
+          symptoms: '', // You can pass symptoms if available
+          sex: patient.gender || 'male' // Default to male if not available
+        }
+      }
+    });
+  };
+
+  // Add calculateAge helper function
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   // Animation variants
   const navItem = {
     hidden: { y: -20, opacity: 0 },
@@ -366,17 +392,29 @@ const ViewPatientProfile = () => {
             Patient Profile Details
           </motion.h1>
           
-          {/* Add Generate Report Button */}
-          <motion.button
-            variants={buttonSpring}
-            whileHover="hover"
-            whileTap="tap"
-            onClick={handleGenerateReport}
-            className="flex items-center px-6 py-2 rounded-lg bg-green-600 text-white font-medium shadow-md"
-          >
-            <MdPrint className="mr-2" />
-            Generate Report
-          </motion.button>
+          <div className="flex space-x-4">
+            <motion.button
+              variants={buttonSpring}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={handleAnalyze}
+              className="flex items-center px-6 py-2 rounded-lg bg-purple-600 text-white font-medium shadow-md"
+            >
+              <MdAnalytics className="mr-2" />
+              Analyze Health
+            </motion.button>
+
+            <motion.button
+              variants={buttonSpring}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={handleGenerateReport}
+              className="flex items-center px-6 py-2 rounded-lg bg-green-600 text-white font-medium shadow-md"
+            >
+              <MdPrint className="mr-2" />
+              Generate Report
+            </motion.button>
+          </div>
         </div>
 
         {/* Add print-specific content wrapper */}
@@ -762,7 +800,7 @@ const ViewPatientProfile = () => {
             viewport={{ once: true }}
             className="border-t border-blue-600 mt-6 pt-6 text-center text-blue-200"
           >
-            <p>&copy; {new Date().getFullYear()} HealthCare HIMS. All rights reserved.</p>
+            <p>&copy; {new Date().toLocaleDateString()} HealthCare HIMS. All rights reserved.</p>
           </motion.div>
         </div>
       </motion.footer>
