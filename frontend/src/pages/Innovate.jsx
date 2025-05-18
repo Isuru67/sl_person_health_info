@@ -738,6 +738,34 @@ const formatAnalysisResults = (result) => {
         };
     };
 
+    // Add this useEffect to check for patient analysis file
+    useEffect(() => {
+        const storedFile = sessionStorage.getItem('patientAnalysisFile');
+        const filename = sessionStorage.getItem('patientAnalysisFilename');
+        
+        if (storedFile && filename) {
+            // Convert base64 to File object
+            fetch(storedFile)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], filename, { type: 'application/pdf' });
+                    
+                    // Simulate file upload
+                    const event = {
+                        target: {
+                            files: [file]
+                        }
+                    };
+                    
+                    handleFileUpload(event);
+                    
+                    // Clear sessionStorage
+                    sessionStorage.removeItem('patientAnalysisFile');
+                    sessionStorage.removeItem('patientAnalysisFilename');
+                });
+        }
+    }, []);
+
     return (
         <div className="flex flex-col min-h-screen bg-white">
             {/* Navigation Bar */}
